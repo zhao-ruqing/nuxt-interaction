@@ -7,9 +7,17 @@
 
       <template v-if="!loading && !errorMsg">
         <div class="map-toolbar">
+          <el-select v-model="searchCity" class="city-select" placeholder="搜索区域" @change="handleCityChange">
+            <el-option
+              v-for="item in CITY_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
           <el-input
             v-model="searchAddress"
-            placeholder="输入地址，如：北京市朝阳区"
+            :placeholder="searchPlaceholder"
             clearable
             @keyup.enter="handleAddressSearch"
           />
@@ -73,7 +81,7 @@
         </div>
 
         <div class="map-hint">
-          {{ clickModeEnabled ? '标注模式已开启，点击地图可标注' : '开启标注模式后可点击地图标注' }}，或输入地址搜索定位
+          当前搜索区域：{{ currentCityLabel }}。{{ clickModeEnabled ? '标注模式已开启' : '开启标注模式后可点击地图标注' }}
         </div>
       </template>
 
@@ -117,6 +125,24 @@ interface AddressItem {
   updated_at: string
 }
 
+interface CityOption {
+  label: string
+  value: string
+  center: [number, number]
+  zoom: number
+}
+
+// 常用城市配置（含中心点与默认缩放）
+const CITY_OPTIONS: CityOption[] = [
+  { label: '上海', value: '上海', center: [121.473701, 31.230416], zoom: 11 },
+  { label: '北京', value: '北京', center: [116.397428, 39.909187], zoom: 11 },
+  { label: '广州', value: '广州', center: [113.264385, 23.129112], zoom: 11 },
+  { label: '深圳', value: '深圳', center: [114.057868, 22.543099], zoom: 11 },
+  { label: '杭州', value: '杭州', center: [120.155070, 30.274084], zoom: 11 },
+  { label: '成都', value: '成都', center: [104.065735, 30.659462], zoom: 11 },
+  { label: '全国', value: '全国', center: [116.397428, 39.909187], zoom: 5 },
+]
+
 const AMAP_KEY = '75e7e73e950401aa1362427451d2cc69'
 const AMAP_SECRET = 'fb4f4ae4a9bcc783ca84ac4b12c93571'
 
@@ -125,6 +151,7 @@ const mapContainerRef = ref<HTMLElement>()
 const loading = ref(true)
 const errorMsg = ref('')
 const searchAddress = ref('')
+const searchCity = ref('上海')
 const searching = ref(false)
 const clickModeEnabled = ref(false)
 const pendingVisible = ref(false)
@@ -147,6 +174,50 @@ const savedMarkers = new Map<number, any>()
 
 const SEARCH_ZOOM = 16
 const FLY_DURATION = 800
+
+const currentCityLabel = computed(() => {
+  return CITY_OPTIONS.find(item => item.value === searchCity.value)?.label || searchCity.value
+})
+
+const searchPlaceholder = computed(() => {
+  if (searchCity.value === '全国') return '输入地址，如：上海市中山公园'
+  return `输入${searchCity.value}内地址，如：中山公园`
+})
+
+// 获取当前城市配置
+function getCityOption(city = searchCity.value) {
+  return CITY_OPTIONS.find(item => item.value === city)
+}
+
+// 同步 Geocoder 搜索城市
+function applyGeocoderCity() {
+  if (!geocoder) return
+  geocoder.setCity(searchCity.value)
+}
+
+// 切换城市时调整地图视野
+function applyMapCityView(animate = true) {
+  const option = getCityOption()
+  if (!option || !mapInstance) return
+  mapInstance.setZoomAndCenter(option.zoom, option.center, !animate, animate ? FLY_DURATION : 0)
+}
+
+function handleCityChange() {
+  applyGeocoderCity()
+  applyMapCityView()
+}
+
+// 从结果中筛选当前城市内的地址
+function pickGeocodeInCity(geocodes: any[]) {
+  if (searchCity.value === '全国') return geocodes[0]
+
+  const cityName = searchCity.value
+  return geocodes.find((geo) => {
+    const address = geo.formattedAddress || ''
+    const componentCity = geo.addressComponent?.city || geo.addressComponent?.province || ''
+    return address.includes(cityName) || componentCity.includes(cityName)
+  }) || null
+}
 
 // 更新临时标注点（未保存）
 function setTempMarker(lng: number, lat: number) {
@@ -215,15 +286,20 @@ function handleAddressSearch() {
   if (!geocoder) return
 
   searching.value = true
+  applyGeocoderCity()
   geocoder.getLocation(keyword, (status: string, result: any) => {
     searching.value = false
     if (status === 'complete' && result.geocodes?.length) {
-      const geo = result.geocodes[0]
+      const geo = pickGeocodeInCity(result.geocodes)
+      if (!geo) {
+        ElMessage.error(`在${currentCityLabel.value}未找到该地址，请换个关键词试试`)
+        return
+      }
       const { lng, lat } = geo.location
       updatePendingMarker(lng, lat, geo.formattedAddress || keyword)
       flyToPosition(lng, lat)
     } else {
-      ElMessage.error('未找到该地址，请换个关键词试试')
+      ElMessage.error(`在${currentCityLabel.value}未找到该地址，请换个关键词试试`)
     }
   })
 }
@@ -354,14 +430,18 @@ onMounted(async () => {
     })
     AMapRef = AMap
 
+    const cityOption = getCityOption()
+    const defaultCenter = cityOption?.center || [116.397428, 39.909187]
+    const defaultZoom = cityOption?.zoom || 11
+
     mapInstance = new AMap.Map(mapContainerRef.value!, {
-      zoom: 12,
-      center: [116.397428, 39.909187],
+      zoom: defaultZoom,
+      center: defaultCenter,
       viewMode: '2D',
       resizeEnable: true,
     })
 
-    geocoder = new AMap.Geocoder()
+    geocoder = new AMap.Geocoder({ city: searchCity.value })
 
     // 仅标注模式开启时响应点击
     mapInstance.on('click', (e: any) => {
@@ -431,6 +511,12 @@ onUnmounted(() => {
 
   .el-input {
     flex: 1;
+    min-width: 0;
+  }
+
+  .city-select {
+    width: 108px;
+    flex-shrink: 0;
   }
 
   .click-mode-switch {

@@ -8,7 +8,9 @@
           <span class="line" ref="line1Ref">让项目管理</span>
           <span class="line" ref="line2Ref">更简单高效</span>
         </h1>
-        <p class="hero-desc" ref="descRef">一站式项目协作平台，助力团队高效交付</p>
+        <p class="hero-desc" ref="descRef">
+          一站式项目协作平台，助力团队高效交付
+        </p>
         <div class="hero-actions" ref="actionsRef">
           <NuxtLink to="/auth/register" class="btn-primary">立即开始</NuxtLink>
           <a href="#features" class="btn-secondary">了解更多</a>
@@ -24,7 +26,7 @@
           <div
             v-for="(item, i) in features"
             :key="i"
-            :ref="el => setCardRef(el, i)"
+            :ref="(el) => setCardRef(el, i)"
             class="feature-card"
           >
             <div class="feature-icon">{{ item.icon }}</div>
@@ -41,107 +43,152 @@
       <div class="cta-content">
         <h2 ref="ctaTitleRef">准备好开始了吗？</h2>
         <p ref="ctaDescRef">免费注册，即刻体验高效项目管理</p>
-        <NuxtLink to="/auth/register" class="btn-primary" ref="ctaBtnRef">免费注册</NuxtLink>
+        <NuxtLink to="/auth/register" class="btn-primary" ref="ctaBtnRef"
+          >免费注册</NuxtLink
+        >
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: "default" });
 
 const features = [
-  { icon: '🎯', title: '高效协作', desc: '团队成员实时同步，协作无缝衔接' },
-  { icon: '🔒', title: '安全可靠', desc: '企业级安全保障，数据全程加密' },
-  { icon: '📊', title: '数据驱动', desc: '可视化报表，洞察项目全貌' },
-  { icon: '⚡', title: '快速响应', desc: '毫秒级响应速度，极致流畅体验' },
-]
+  { icon: "🎯", title: "高效协作", desc: "团队成员实时同步，协作无缝衔接" },
+  { icon: "🔒", title: "安全可靠", desc: "企业级安全保障，数据全程加密" },
+  { icon: "📊", title: "数据驱动", desc: "可视化报表，洞察项目全貌" },
+  { icon: "⚡", title: "快速响应", desc: "毫秒级响应速度，极致流畅体验" },
+];
 
 // refs
-const heroBgRef = ref<HTMLElement>()
-const line1Ref = ref<HTMLElement>()
-const line2Ref = ref<HTMLElement>()
-const descRef = ref<HTMLElement>()
-const actionsRef = ref<HTMLElement>()
-const sectionTitleRef = ref<HTMLElement>()
-const cardRefs = ref<HTMLElement[]>([])
-const ctaBgRef = ref<HTMLElement>()
-const ctaTitleRef = ref<HTMLElement>()
-const ctaDescRef = ref<HTMLElement>()
-const ctaBtnRef = ref<HTMLElement>()
+const heroBgRef = ref<HTMLElement>();
+const line1Ref = ref<HTMLElement>();
+const line2Ref = ref<HTMLElement>();
+const descRef = ref<HTMLElement>();
+const actionsRef = ref<HTMLElement>();
+const sectionTitleRef = ref<HTMLElement>();
+const cardRefs = ref<HTMLElement[]>([]);
+const ctaBgRef = ref<HTMLElement>();
+const ctaTitleRef = ref<HTMLElement>();
+const ctaDescRef = ref<HTMLElement>();
+const ctaBtnRef = ref<HTMLElement>();
 
 function setCardRef(el: any, i: number) {
-  if (el) cardRefs.value[i] = el
+  if (el) cardRefs.value[i] = el;
 }
 
 onMounted(() => {
-  gsap.registerPlugin(ScrollTrigger)
+  gsap.registerPlugin(ScrollTrigger);
 
   // Hero 入场动画
-  const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: .8 } })
-  tl.fromTo(line1Ref.value, { y: 60, opacity: 0 }, { y: 0, opacity: 1 })
-    .fromTo(line2Ref.value, { y: 60, opacity: 0 }, { y: 0, opacity: 1 }, '-=0.5')
-    .fromTo(descRef.value, { y: 30, opacity: 0 }, { y: 0, opacity: 1 }, '-=0.5')
-    .fromTo(actionsRef.value, { y: 20, opacity: 0 }, { y: 0, opacity: 1 }, '-=0.3')
+  const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.8 } });
+  tl.fromTo(line1Ref.value!, { y: 60, opacity: 0 }, { y: 0, opacity: 1 })
+    .fromTo(
+      line2Ref.value!,
+      { y: 60, opacity: 0 },
+      { y: 0, opacity: 1 },
+      "-=0.5",
+    )
+    .fromTo(
+      descRef.value!,
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1 },
+      "-=0.5",
+    )
+    .fromTo(
+      actionsRef.value as HTMLElement,
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1 },
+      "-=0.3",
+    );
 
   // Hero 视差背景
-  gsap.to(heroBgRef.value, {
+  gsap.to(heroBgRef.value as HTMLElement, {
     y: 120,
-    ease: 'none',
+    ease: "none",
     scrollTrigger: {
-      trigger: '.hero',
-      start: 'top top',
-      end: 'bottom top',
+      trigger: ".hero",
+      start: "top top",
+      end: "bottom top",
       scrub: true,
     },
-  })
+  });
 
   // 特性区域标题
   ScrollTrigger.create({
-    trigger: sectionTitleRef.value,
-    start: 'top 85%',
-    onEnter: () => gsap.to(sectionTitleRef.value, { y: 0, opacity: 1, duration: .6, ease: 'power2.out' }),
-  })
+    trigger: sectionTitleRef.value as HTMLElement,
+    start: "top 85%",
+    onEnter: () =>
+      gsap.to(sectionTitleRef.value as HTMLElement, {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        ease: "power2.out",
+      }),
+  });
 
   // 特性卡片依次入场
   cardRefs.value.forEach((card, i) => {
     ScrollTrigger.create({
       trigger: card,
-      start: 'top 90%',
-      onEnter: () => gsap.fromTo(
-        card,
-        { x: i % 2 === 0 ? -40 : 40, opacity: 0 },
-        { x: 0, opacity: 1, duration: .6, delay: i * .1, ease: 'power2.out' },
-      ),
-    })
-  })
+      start: "top 90%",
+      onEnter: () =>
+        gsap.fromTo(
+          card as HTMLElement,
+          { x: i % 2 === 0 ? -40 : 40, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: 0.6,
+            delay: i * 0.1,
+            ease: "power2.out",
+          },
+        ),
+    });
+  });
 
   // CTA 视差
-  gsap.to(ctaBgRef.value, {
+  gsap.to(ctaBgRef.value as HTMLElement, {
     y: -80,
-    ease: 'none',
+    ease: "none",
     scrollTrigger: {
-      trigger: '.cta',
-      start: 'top bottom',
-      end: 'bottom top',
+      trigger: ".cta",
+      start: "top bottom",
+      end: "bottom top",
       scrub: true,
     },
-  })
+  });
 
   // CTA 文字入场
   const ctaTl = gsap.timeline({
     scrollTrigger: {
-      trigger: '.cta',
-      start: 'top 75%',
+      trigger: ".cta",
+      start: "top 75%",
     },
-  })
-  ctaTl.fromTo(ctaTitleRef.value, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: .6, ease: 'power2.out' })
-    .fromTo(ctaDescRef.value, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: .5, ease: 'power2.out' }, '-=0.3')
-    .fromTo(ctaBtnRef.value, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: .5, ease: 'power2.out' }, '-=0.3')
-})
+  });
+  ctaTl
+    .fromTo(
+      ctaTitleRef.value as HTMLElement,
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" },
+    )
+    .fromTo(
+      ctaDescRef.value as HTMLElement,
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      "-=0.3",
+    )
+    .fromTo(
+      ctaBtnRef.value as HTMLElement,
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+      "-=0.3",
+    );
+});
 </script>
 
 <style scoped lang="scss">
@@ -167,13 +214,17 @@ onMounted(() => {
   background: linear-gradient(180deg, #eef1ff 0%, #f8f9fb 60%, #fff 100%);
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -30%;
     right: -20%;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba($primary, .08) 0%, transparent 70%);
+    background: radial-gradient(
+      circle,
+      rgba($primary, 0.08) 0%,
+      transparent 70%
+    );
     border-radius: 50%;
   }
 }
@@ -219,12 +270,12 @@ onMounted(() => {
   border-radius: 10px;
   font-size: 16px;
   font-weight: 600;
-  transition: all .2s;
+  transition: all 0.2s;
 
   &:hover {
     background: $primary-dark;
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba($primary, .35);
+    box-shadow: 0 4px 16px rgba($primary, 0.35);
   }
 }
 
@@ -236,7 +287,7 @@ onMounted(() => {
   font-weight: 500;
   border: 1.5px solid $border;
   color: $text;
-  transition: all .2s;
+  transition: all 0.2s;
 
   &:hover {
     border-color: $text;
@@ -274,7 +325,9 @@ onMounted(() => {
   padding: 32px 24px;
   text-align: center;
   box-shadow: $shadow;
-  transition: box-shadow .3s, transform .3s;
+  transition:
+    box-shadow 0.3s,
+    transform 0.3s;
   opacity: 0;
 
   &:hover {
@@ -312,7 +365,7 @@ onMounted(() => {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, #fff 0%, $text 100%);
-  opacity: .04;
+  opacity: 0.04;
 }
 
 .cta-content {
