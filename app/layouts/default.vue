@@ -5,6 +5,7 @@
         <NuxtLink to="/" class="logo">nuxt-interaction</NuxtLink>
         <nav class="nav-links">
           <NuxtLink to="/">首页</NuxtLink>
+          <NuxtLink to="/products">饮品商城</NuxtLink>
           <NuxtLink to="/auth/login">登录</NuxtLink>
           <NuxtLink to="/auth/register" class="btn-register">注册</NuxtLink>
         </nav>
