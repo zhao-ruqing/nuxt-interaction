@@ -18,12 +18,12 @@
 
 ### 2.1 相关文件
 
-| 文件 | 说明 |
-|------|------|
-| `app/components/AiChatWidget.vue` | 悬浮按钮 + 对话面板 UI |
-| `app/composables/useAiChat.ts` | 对话状态管理、SSE 解析、指令 JSON 提取 |
-| `server/api/ai/chat.post.ts` | Dify API 流式代理（API Key 仅存服务端） |
-| `nuxt.config.ts` | `difyApiKey`、`difyApiBase` 运行时配置 |
+| 文件                              | 说明                                    |
+| --------------------------------- | --------------------------------------- |
+| `app/components/AiChatWidget.vue` | 悬浮按钮 + 对话面板 UI                  |
+| `app/composables/useAiChat.ts`    | 对话状态管理、SSE 解析、指令 JSON 提取  |
+| `server/api/ai/chat.post.ts`      | Dify API 流式代理（API Key 仅存服务端） |
+| `nuxt.config.ts`                  | `difyApiKey`、`difyApiBase` 运行时配置  |
 
 ### 2.2 环境配置
 
@@ -61,12 +61,12 @@ DIFY_API_KEY=app-F3VCgpqjGCoWKXMu22vAEL2f
 
 SSE 每行格式为 `data: {JSON}\n\n`，主要关注以下事件：
 
-| event | 说明 |
-|-------|------|
-| `message` | 增量文本，`answer` 字段为本次增量内容 |
-| `agent_message` | Agent 模式增量文本 |
-| `message_end` | 消息结束，可获取 `conversation_id` |
-| `error` | 错误信息 |
+| event           | 说明                                  |
+| --------------- | ------------------------------------- |
+| `message`       | 增量文本，`answer` 字段为本次增量内容 |
+| `agent_message` | Agent 模式增量文本                    |
+| `message_end`   | 消息结束，可获取 `conversation_id`    |
+| `error`         | 错误信息                              |
 
 前端在 `useAiChat.ts` 中累积 `answer` 字段实现打字机效果。
 
@@ -86,26 +86,26 @@ SSE 每行格式为 `data: {JSON}\n\n`，主要关注以下事件：
 
 ### 4.1 字段说明
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `action` | string | 是 | 操作类型，如 `ORDER`、`NAVIGATE`、`SEARCH` |
-| `product` | string | 否 | 商品名称，用于匹配 `products` 表 |
-| `specs` | string | 否 | 规格描述，如「加冰」「大杯」 |
-| `productId` | number | 否 | 直接指定商品 ID（优先级高于名称匹配） |
-| `route` | string | 否 | 目标页面路由，如 `/products/4` |
+| 字段        | 类型   | 必填 | 说明                                       |
+| ----------- | ------ | ---- | ------------------------------------------ |
+| `action`    | string | 是   | 操作类型，如 `ORDER`、`NAVIGATE`、`SEARCH` |
+| `product`   | string | 否   | 商品名称，用于匹配 `products` 表           |
+| `specs`     | string | 否   | 规格描述，如「加冰」「大杯」               |
+| `productId` | number | 否   | 直接指定商品 ID（优先级高于名称匹配）      |
+| `route`     | string | 否   | 目标页面路由，如 `/products/4`             |
 
 ### 4.2 前端解析与清洗
 
 `useAiChat.ts` 提供以下工具函数：
 
-| 函数 | 说明 |
-|------|------|
-| `stripThinkingTags()` | 剥离 `` 思考块 |
-| `parseAiAction()` | 从清洗后文本提取指令 JSON |
-| `sanitizeAiResponse()` | 统一清洗：去思考块 → 解析指令 → 生成友好展示文案 |
+| 函数                    | 说明                                                |
+| ----------------------- | --------------------------------------------------- |
+| `stripThinkingTags()`   | 剥离 `` 思考块                                      |
+| `parseAiAction()`       | 从清洗后文本提取指令 JSON                           |
+| `sanitizeAiResponse()`  | 统一清洗：去思考块 → 解析指令 → 生成友好展示文案    |
 | `formatActionMessage()` | 将 `ORDER` 等指令转为「好的，已为您准备下单：咖啡」 |
 
-**思考块处理**：部分模型会在回复前输出 `` 包裹的推理过程。前端在流式过程中实时调用 `sanitizeAiResponse()`，确保思考内容不展示在气泡中（可选通过「思考过程」折叠面板查看）。
+**思考块处理**：部分模型会在回复前输出 ``包裹的推理过程。前端在流式过程中实时调用`sanitizeAiResponse()`，确保思考内容不展示在气泡中（可选通过「思考过程」折叠面板查看）。
 
 **纯 JSON 回复**：当 AI 仅返回 `{"action":"ORDER","product":"咖啡","specs":""}` 时，气泡展示友好文案而非原始 JSON，指令详情在下方「检测到操作指令」卡片中展示。
 
@@ -146,12 +146,12 @@ sequenceDiagram
 
 ### 5.2 已实现模块
 
-| 文件 | 说明 |
-|------|------|
-| `app/stores/orderAutomation.ts` | Pinia 存储待执行的下单任务 |
-| `app/composables/useActionExecutor.ts` | 指令分发、商品匹配、页面跳转 |
-| `app/composables/useGhostHand.ts` | 虚拟光标移动 + GSAP 动画 + 模拟点击 |
-| `app/pages/products/[id].vue` | `data-ghost-target` 标记 + `runAutoOrder()` |
+| 文件                                   | 说明                                        |
+| -------------------------------------- | ------------------------------------------- |
+| `app/stores/orderAutomation.ts`        | Pinia 存储待执行的下单任务                  |
+| `app/composables/useActionExecutor.ts` | 指令分发、商品匹配、页面跳转                |
+| `app/composables/useGhostHand.ts`      | 虚拟光标移动 + GSAP 动画 + 模拟点击         |
+| `app/pages/products/[id].vue`          | `data-ghost-target` 标记 + `runAutoOrder()` |
 
 ### 5.3 指令 JSON 协议（含 quantity）
 
@@ -164,14 +164,14 @@ sequenceDiagram
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `action` | `ORDER` / `NAVIGATE` / `SEARCH` |
-| `product` | 商品名或品类关键词（如「咖啡」匹配咖啡类销量最高商品） |
-| `productId` | 可选，直接指定商品 ID（优先级最高） |
-| `specs` | 规格，`默认` 或 `标准` 取第一项；也可填「大杯」等关键词模糊匹配 |
-| `quantity` | 数量，默认 1 |
-| `route` | `NAVIGATE` 时目标路由 |
+| 字段        | 说明                                                            |
+| ----------- | --------------------------------------------------------------- |
+| `action`    | `ORDER` / `NAVIGATE` / `SEARCH`                                 |
+| `product`   | 商品名或品类关键词（如「咖啡」匹配咖啡类销量最高商品）          |
+| `productId` | 可选，直接指定商品 ID（优先级最高）                             |
+| `specs`     | 规格，`默认` 或 `标准` 取第一项；也可填「大杯」等关键词模糊匹配 |
+| `quantity`  | 数量，默认 1                                                    |
+| `route`     | `NAVIGATE` 时目标路由                                           |
 
 ### 5.4 商品匹配逻辑
 
@@ -195,8 +195,8 @@ sequenceDiagram
 
 ```typescript
 if (import.meta.client && final.action) {
-  const { execute } = useActionExecutor()
-  setTimeout(() => execute(final.action!), 600)
+  const { execute } = useActionExecutor();
+  setTimeout(() => execute(final.action!), 600);
 }
 ```
 
@@ -241,7 +241,39 @@ mysql -u root -p nuxt_interaction < server/sql/products.sql
 
 ## 9. 版本记录
 
-| 版本 | 日期 | 说明 |
-|------|------|------|
+| 版本 | 日期       | 说明                                        |
+| ---- | ---------- | ------------------------------------------- |
 | v0.1 | 2026-07-01 | 悬浮窗 + Dify 流式对话 + 指令 JSON 解析展示 |
-| v0.2 | 2026-07-01 | 自动下单 + 幽灵手模拟点击 + 商品匹配 |
+| v0.2 | 2026-07-01 | 自动下单 + 幽灵手模拟点击 + 商品匹配        |
+| v0.3 | 2026-07-01 | 规格/库存校验 + 支付页 + 数据库真实库存      |
+
+第三阶段,
+
+1. 规格和数量校验,规格不符或数量不足需提示
+2. 点击立即购买,跳转支付页并提示用户是否确认支付和密码等信息
+3. 商品数量改为真实数据
+
+### 5.7 规格与库存校验（v0.3）
+
+| 场景 | 行为 |
+| ---- | ---- |
+| 规格不匹配 | `findSpecMatch()` 返回 `matched: false`，提示可选规格列表 |
+| 库存为 0 | 提示「商品已售罄」，终止自动下单 |
+| 数量超过库存 | 提示「库存不足，当前仅剩 N 件」，终止自动下单 |
+
+校验在 `executeOrder()`（跳转前）和 `runAutoOrder()`（幽灵手操作前）双重执行。
+
+### 5.8 支付流程（v0.3）
+
+点击「立即购买」后跳转 `/payment?productId=&specIndex=&quantity=`：
+
+1. 展示订单摘要（商品、规格、数量、合计）
+2. AI 自动下单时显示提示横幅，并弹出确认消息
+3. 用户勾选「确认支付」并输入 6 位以上支付密码
+4. 调用 `POST /api/orders/checkout` 扣减库存并完成支付
+
+### 5.9 真实库存数据（v0.3）
+
+`server/utils/products.ts` 优先从 MySQL `products` 表读取商品与库存，数据库不可用时回退 `server/data/products.ts` 内存数据。支付成功后库存与销量同步更新。
+
+---

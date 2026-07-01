@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import type { Product, ProductDetailResponse } from '~/types/product'
-import { resolveSpecIndex } from '~/composables/useActionExecutor'
+import { findSpecMatch, validateOrderQuantity } from '~/composables/useActionExecutor'
 
 definePageMeta({ layout: 'default' })
 
@@ -128,7 +128,23 @@ function addToCart() {
 }
 
 function buyNow() {
-  ElMessage.success(`下单成功！${product.value?.name} × ${quantity.value}，合计 ¥${currentPrice.value * quantity.value}（模拟）`)
+  if (!product.value) return
+
+  const qtyCheck = validateOrderQuantity(quantity.value, product.value.stock)
+  if (!qtyCheck.valid) {
+    ElMessage.warning(qtyCheck.message!)
+    return
+  }
+
+  navigateTo({
+    path: '/payment',
+    query: {
+      productId: product.value.id,
+      specIndex: selectedSpec.value,
+      quantity: quantity.value,
+      from: orderStore.pending?.status === 'running' ? 'auto' : undefined,
+    },
+  })
 }
 
 async function fetchProduct() {
@@ -162,7 +178,24 @@ async function runAutoOrder() {
   await new Promise(r => setTimeout(r, 600))
 
   try {
-    const specIndex = resolveSpecIndex(order.specs, product.value.specs)
+    const specResult = findSpecMatch(order.specs, product.value.specs)
+    if (!specResult.matched) {
+      const available = product.value.specs.map(s => s.size).join('、')
+      const msg = `规格「${order.specs}」与商品不符，可选：${available}`
+      ElMessage.warning(msg)
+      orderStore.updateStatus('failed', msg)
+      return
+    }
+
+    const qtyCheck = validateOrderQuantity(order.quantity, product.value.stock)
+    if (!qtyCheck.valid) {
+      ElMessage.warning(qtyCheck.message!)
+      orderStore.updateStatus('failed', qtyCheck.message!)
+      return
+    }
+
+    const specIndex = specResult.index
+    const targetQty = order.quantity
     selectedSpec.value = specIndex
     quantity.value = 1
 
@@ -172,7 +205,6 @@ async function runAutoOrder() {
     const specBtn = document.querySelector(`[data-ghost-target="spec-${specIndex}"]`) as HTMLElement
     if (specBtn) await ghostHand.tap(specBtn)
 
-    const targetQty = Math.min(order.quantity, product.value.stock)
     if (targetQty > 1) {
       const plusBtn = document.querySelector('[data-ghost-target="quantity-plus"]') as HTMLElement
       for (let i = 1; i < targetQty; i++) {
@@ -188,9 +220,10 @@ async function runAutoOrder() {
     await new Promise(r => setTimeout(r, 300))
 
     const buyBtn = document.querySelector('[data-ghost-target="buy-now"]') as HTMLElement
-    if (buyBtn) await ghostHand.tap(buyBtn)
-
-    orderStore.updateStatus('done', `已下单 ${product.value.name} × ${targetQty}`)
+    if (buyBtn) {
+      await ghostHand.tap(buyBtn)
+      orderStore.updateStatus('done', `${product.value.name} × ${targetQty}，请在支付页确认`)
+    }
   }
   catch (e: any) {
     orderStore.updateStatus('failed', e?.message || '自动下单失败')
@@ -199,7 +232,7 @@ async function runAutoOrder() {
   finally {
     ghostHand.hide()
     autoOrderRunning.value = false
-    setTimeout(() => orderStore.clear(), 4000)
+    setTimeout(() => orderStore.clear(), 8000)
   }
 }
 

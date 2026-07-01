@@ -106,8 +106,8 @@ const orderStatusText = computed(() => {
   if (!o) return ''
   const map: Record<string, string> = {
     pending: '⏳ 正在跳转到商品页...',
-    running: '👆 幽灵手正在自动下单...',
-    done: `✅ ${o.message || '下单完成'}`,
+    running: '👆 幽灵手正在选择规格与数量...',
+    done: `✅ ${o.message || '已跳转支付页，请确认支付'}`,
     failed: `❌ ${o.message || '下单失败'}`,
   }
   return map[o.status] || ''

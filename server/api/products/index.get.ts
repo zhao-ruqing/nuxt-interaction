@@ -1,11 +1,11 @@
-import { products, categories } from '../../data/products'
+import { getAllProducts, categories } from '../../utils/products'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const category = query.category as string | undefined
   const keyword = (query.keyword as string | undefined)?.trim().toLowerCase()
 
-  let result = [...products]
+  let result = await getAllProducts()
 
   if (category && category !== 'all') {
     result = result.filter(p => p.category === category)

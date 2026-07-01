@@ -48,17 +48,38 @@ export async function matchProduct(action: AiAction): Promise<Product | null> {
   return null
 }
 
-/** 解析规格索引，「默认」取第一项 */
-export function resolveSpecIndex(specs: string, productSpecs: { size: string }[]): number {
-  if (!productSpecs.length) return 0
+/** 匹配规格，返回索引与是否命中 */
+export function findSpecMatch(
+  specs: string,
+  productSpecs: { size: string }[],
+): { index: number; matched: boolean } {
+  if (!productSpecs.length) return { index: 0, matched: true }
 
   const normalized = specs?.trim()
-  if (!normalized || normalized === '默认' || normalized === '标准') return 0
+  if (!normalized || normalized === '默认' || normalized === '标准') {
+    return { index: 0, matched: true }
+  }
 
   const idx = productSpecs.findIndex(s =>
     s.size.includes(normalized) || normalized.includes(s.size),
   )
-  return idx >= 0 ? idx : 0
+  return idx >= 0 ? { index: idx, matched: true } : { index: 0, matched: false }
+}
+
+/** 解析规格索引，「默认」取第一项 */
+export function resolveSpecIndex(specs: string, productSpecs: { size: string }[]): number {
+  return findSpecMatch(specs, productSpecs).index
+}
+
+/** 校验下单数量与库存 */
+export function validateOrderQuantity(quantity: number, stock: number): { valid: boolean; message?: string } {
+  if (stock <= 0) {
+    return { valid: false, message: '商品已售罄' }
+  }
+  if (quantity > stock) {
+    return { valid: false, message: `库存不足，当前仅剩 ${stock} 件（需要 ${quantity} 件）` }
+  }
+  return { valid: true }
 }
 
 export function useActionExecutor() {
@@ -73,6 +94,19 @@ export function useActionExecutor() {
 
     const quantity = Math.max(1, Number(action.quantity) || 1)
     const specs = action.specs?.trim() || '默认'
+
+    const specResult = findSpecMatch(specs, product.specs)
+    if (!specResult.matched) {
+      const available = product.specs.map(s => s.size).join('、')
+      ElMessage.warning(`规格「${specs}」不存在，可选：${available}`)
+      return
+    }
+
+    const qtyCheck = validateOrderQuantity(quantity, product.stock)
+    if (!qtyCheck.valid) {
+      ElMessage.warning(qtyCheck.message!)
+      return
+    }
 
     orderStore.setPending({
       productId: product.id,
@@ -106,5 +140,5 @@ export function useActionExecutor() {
     }
   }
 
-  return { execute, matchProduct, resolveSpecIndex }
+  return { execute, matchProduct, resolveSpecIndex, findSpecMatch, validateOrderQuantity }
 }
