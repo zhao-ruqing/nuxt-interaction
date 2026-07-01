@@ -118,82 +118,86 @@ SSE 每行格式为 `data: {JSON}\n\n`，主要关注以下事件：
 
 ---
 
-## 5. 后续开发：页面跳转 + 幽灵手模拟点击
+## 5. 自动下单 + 幽灵手模拟点击
 
-> **当前状态：未实现，仅记录方案。**
+> **当前状态：已实现 v0.2**
 
-### 5.1 目标流程
+### 5.1 完整流程
 
 ```mermaid
 sequenceDiagram
     participant U as 用户
     participant AI as AI 助手
-    participant P as ActionParser
+    participant E as ActionExecutor
     participant R as Router
     participant G as GhostHand
+    participant P as 商品详情页
 
     U->>AI: 帮我点一杯咖啡
-    AI-->>P: {"action":"ORDER","product":"可乐","specs":"加冰"}
-    P->>P: 解析 action JSON
-    P->>R: navigateTo(/products/{id})
-    R-->>G: 页面加载完成
-    G->>G: 高亮目标规格按钮
-    G->>G: 模拟点击「加冰」规格
-    G->>G: 模拟点击「加入购物车」
-    G-->>U: 展示操作动画反馈
+    AI-->>E: {"action":"ORDER","product":"咖啡","specs":"默认","quantity":1}
+    E->>E: matchProduct() 匹配商品
+    E->>R: navigateTo(/products/{id})
+    R->>P: 页面加载
+    P->>G: 幽灵手点击规格
+    P->>G: 幽灵手调整数量
+    P->>G: 幽灵手点击「立即购买」
+    G-->>U: 下单成功提示
 ```
 
-### 5.2 建议实现模块
+### 5.2 已实现模块
 
-#### `app/composables/useActionExecutor.ts`（待开发）
+| 文件 | 说明 |
+|------|------|
+| `app/stores/orderAutomation.ts` | Pinia 存储待执行的下单任务 |
+| `app/composables/useActionExecutor.ts` | 指令分发、商品匹配、页面跳转 |
+| `app/composables/useGhostHand.ts` | 虚拟光标移动 + GSAP 动画 + 模拟点击 |
+| `app/pages/products/[id].vue` | `data-ghost-target` 标记 + `runAutoOrder()` |
 
-```typescript
-interface ActionExecutor {
-  execute(action: AiAction): Promise<void>
+### 5.3 指令 JSON 协议（含 quantity）
+
+```json
+{
+  "action": "ORDER",
+  "product": "咖啡",
+  "specs": "默认",
+  "quantity": 1
 }
 ```
 
-职责：
-- 根据 `action` 类型分发处理逻辑
-- `ORDER`：查商品 → 跳转详情页 → 触发幽灵手
-- `NAVIGATE`：直接 `navigateTo(action.route)`
-- `SEARCH`：跳转商品列表并带关键词参数
+| 字段 | 说明 |
+|------|------|
+| `action` | `ORDER` / `NAVIGATE` / `SEARCH` |
+| `product` | 商品名或品类关键词（如「咖啡」匹配咖啡类销量最高商品） |
+| `productId` | 可选，直接指定商品 ID（优先级最高） |
+| `specs` | 规格，`默认` 或 `标准` 取第一项；也可填「大杯」等关键词模糊匹配 |
+| `quantity` | 数量，默认 1 |
+| `route` | `NAVIGATE` 时目标路由 |
 
-#### `app/composables/useGhostHand.ts`（待开发）
+### 5.4 商品匹配逻辑
 
-职责：
-- 在页面上创建虚拟光标元素
-- 通过 `data-ghost-target` 属性标记可点击目标
-- 使用 GSAP 动画移动光标到目标位置并模拟 click
-- 操作步骤队列化，逐步执行
+1. `productId` 直接命中
+2. 商品名完全匹配
+3. 商品名包含关键词（多个时取销量最高）
+4. 品类关键词映射（咖啡→coffee、可乐→soda 等）
+5. `categoryName` 模糊匹配
 
-#### 页面元素标记规范（待开发）
-
-在商品详情页等关键按钮上添加 `data-ghost-target` 属性：
+### 5.5 幽灵手元素标记
 
 ```html
-<button data-ghost-target="spec-加冰">加冰</button>
-<button data-ghost-target="add-cart">加入购物车</button>
+<button data-ghost-target="spec-0">中杯 350ml</button>
+<button data-ghost-target="quantity-plus">+</button>
+<button data-ghost-target="buy-now">立即购买</button>
 ```
 
-幽灵手根据 `action.specs` 匹配 `data-ghost-target` 值进行点击。
+### 5.6 接入点
 
-### 5.3 商品匹配逻辑
-
-1. 优先使用 `action.productId`
-2. 否则按 `action.product` 名称模糊匹配 `products` 表 / API
-3. 匹配失败时 AI 助手提示用户重新选择
-
-### 5.4 接入点
-
-在 `useAiChat.ts` 的 `sendMessage` 完成后，当 `assistantMsg.action` 存在时调用：
+`useAiChat.ts` 在流式响应结束后自动调用：
 
 ```typescript
-// 后续开发时取消注释
-// const executor = useActionExecutor()
-// if (assistantMsg.action) {
-//   await executor.execute(assistantMsg.action)
-// }
+if (import.meta.client && final.action) {
+  const { execute } = useActionExecutor()
+  setTimeout(() => execute(final.action!), 600)
+}
 ```
 
 ---
@@ -226,7 +230,9 @@ mysql -u root -p nuxt_interaction < server/sql/products.sql
 
 - [ ] 点击悬浮按钮，面板正常打开/关闭
 - [ ] 发送普通消息，流式打字效果正常
-- [ ] 发送「帮我点一杯咖啡」，返回 JSON 指令并展示指令卡片
+- [ ] 发送「帮我点一杯咖啡」，自动跳转商品页并完成幽灵手下单
+- [ ] 指令含 `quantity: 2` 时数量正确递增
+- [ ] `specs: "大杯"` 时选中对应规格
 - [ ] 多轮对话 `conversation_id` 保持连续
 - [ ] 清空对话后重新开始新会话
 - [ ] 移动端面板宽度自适应
@@ -238,4 +244,4 @@ mysql -u root -p nuxt_interaction < server/sql/products.sql
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v0.1 | 2026-07-01 | 悬浮窗 + Dify 流式对话 + 指令 JSON 解析展示 |
-| v0.2 | 待定 | 页面跳转 + 幽灵手模拟点击自动化 |
+| v0.2 | 2026-07-01 | 自动下单 + 幽灵手模拟点击 + 商品匹配 |

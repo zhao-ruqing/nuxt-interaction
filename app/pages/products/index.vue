@@ -122,7 +122,13 @@ async function fetchProducts() {
 
 watch(activeCategory, () => fetchProducts())
 
-onMounted(() => fetchProducts())
+const route = useRoute()
+
+onMounted(() => {
+  const q = route.query.keyword
+  if (typeof q === 'string' && q) keyword.value = q
+  fetchProducts()
+})
 </script>
 
 <style scoped lang="scss">

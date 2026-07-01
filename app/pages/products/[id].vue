@@ -51,6 +51,7 @@
                 :key="spec.size"
                 class="spec-btn"
                 :class="{ active: selectedSpec === i }"
+                :data-ghost-target="`spec-${i}`"
                 @click="selectedSpec = i"
               >
                 <span class="spec-size">{{ spec.size }}</span>
@@ -63,9 +64,9 @@
           <div class="quantity-section">
             <div class="spec-label">数量</div>
             <div class="quantity-control">
-              <button :disabled="quantity <= 1" @click="quantity--">−</button>
-              <span>{{ quantity }}</span>
-              <button :disabled="quantity >= product.stock" @click="quantity++">+</button>
+              <button data-ghost-target="quantity-minus" :disabled="quantity <= 1" @click="quantity--">−</button>
+              <span data-ghost-target="quantity-value">{{ quantity }}</span>
+              <button data-ghost-target="quantity-plus" :disabled="quantity >= product.stock" @click="quantity++">+</button>
             </div>
           </div>
 
@@ -75,8 +76,8 @@
               <span class="label">合计</span>
               <span class="price">¥{{ currentPrice * quantity }}</span>
             </div>
-            <button class="add-cart-btn" @click="addToCart">加入购物车</button>
-            <button class="buy-btn" @click="buyNow">立即购买</button>
+            <button class="add-cart-btn" data-ghost-target="add-cart" @click="addToCart">加入购物车</button>
+            <button class="buy-btn" data-ghost-target="buy-now" @click="buyNow">立即购买</button>
           </div>
         </div>
       </div>
@@ -94,15 +95,20 @@
 
 <script setup lang="ts">
 import type { Product, ProductDetailResponse } from '~/types/product'
+import { resolveSpecIndex } from '~/composables/useActionExecutor'
 
 definePageMeta({ layout: 'default' })
 
 const route = useRoute()
+const orderStore = useOrderAutomationStore()
+const ghostHand = useGhostHand()
+
 const product = ref<Product | null>(null)
 const pending = ref(true)
 const error = ref('')
 const selectedSpec = ref(0)
 const quantity = ref(1)
+const autoOrderRunning = ref(false)
 
 const currentPrice = computed(() => {
   if (!product.value) return 0
@@ -141,6 +147,70 @@ async function fetchProduct() {
     pending.value = false
   }
 }
+
+/** AI 自动下单：幽灵手依次点击规格、数量、立即购买 */
+async function runAutoOrder() {
+  const order = orderStore.pending
+  if (!order || order.status !== 'pending') return
+  if (order.productId !== Number(route.params.id)) return
+  if (!product.value || autoOrderRunning.value) return
+
+  autoOrderRunning.value = true
+  orderStore.updateStatus('running')
+
+  await nextTick()
+  await new Promise(r => setTimeout(r, 600))
+
+  try {
+    const specIndex = resolveSpecIndex(order.specs, product.value.specs)
+    selectedSpec.value = specIndex
+    quantity.value = 1
+
+    await nextTick()
+    await new Promise(r => setTimeout(r, 300))
+
+    const specBtn = document.querySelector(`[data-ghost-target="spec-${specIndex}"]`) as HTMLElement
+    if (specBtn) await ghostHand.tap(specBtn)
+
+    const targetQty = Math.min(order.quantity, product.value.stock)
+    if (targetQty > 1) {
+      const plusBtn = document.querySelector('[data-ghost-target="quantity-plus"]') as HTMLElement
+      for (let i = 1; i < targetQty; i++) {
+        if (plusBtn && !plusBtn.hasAttribute('disabled')) {
+          await ghostHand.tap(plusBtn)
+        }
+        else {
+          quantity.value++
+        }
+      }
+    }
+
+    await new Promise(r => setTimeout(r, 300))
+
+    const buyBtn = document.querySelector('[data-ghost-target="buy-now"]') as HTMLElement
+    if (buyBtn) await ghostHand.tap(buyBtn)
+
+    orderStore.updateStatus('done', `已下单 ${product.value.name} × ${targetQty}`)
+  }
+  catch (e: any) {
+    orderStore.updateStatus('failed', e?.message || '自动下单失败')
+    ElMessage.error('自动下单失败，请手动操作')
+  }
+  finally {
+    ghostHand.hide()
+    autoOrderRunning.value = false
+    setTimeout(() => orderStore.clear(), 4000)
+  }
+}
+
+watch(
+  () => [product.value, orderStore.pending] as const,
+  ([p, order]) => {
+    if (p && order?.status === 'pending' && order.productId === Number(route.params.id)) {
+      runAutoOrder()
+    }
+  },
+)
 
 onMounted(() => fetchProduct())
 </script>

@@ -61,9 +61,11 @@
                 </details>
                 <!-- 指令 JSON 预览（后续将触发页面跳转与幽灵手操作） -->
                 <div v-if="msg.action" class="action-card">
-                  <div class="action-label">检测到操作指令</div>
+                  <div class="action-label">操作指令</div>
                   <pre>{{ JSON.stringify(msg.action, null, 2) }}</pre>
-                  <p class="action-hint">后续版本将自动执行页面跳转与模拟点击</p>
+                  <p v-if="msg.action.action === 'ORDER' && orderStatusText" class="action-status">
+                    {{ orderStatusText }}
+                  </p>
                 </div>
               </template>
             </div>
@@ -93,10 +95,23 @@
 
 <script setup lang="ts">
 const { messages, isStreaming, sendMessage, clearMessages } = useAiChat()
+const orderStore = useOrderAutomationStore()
 
 const isOpen = ref(false)
 const inputText = ref('')
 const messageListRef = ref<HTMLElement>()
+
+const orderStatusText = computed(() => {
+  const o = orderStore.pending
+  if (!o) return ''
+  const map: Record<string, string> = {
+    pending: '⏳ 正在跳转到商品页...',
+    running: '👆 幽灵手正在自动下单...',
+    done: `✅ ${o.message || '下单完成'}`,
+    failed: `❌ ${o.message || '下单失败'}`,
+  }
+  return map[o.status] || ''
+})
 
 const quickPrompts = [
   '帮我点一杯咖啡',
@@ -359,6 +374,13 @@ watch(messages, () => {
     font-size: 11px;
     color: $text-muted;
     margin-top: 6px;
+  }
+
+  .action-status {
+    font-size: 12px;
+    color: $primary;
+    font-weight: 500;
+    margin-top: 8px;
   }
 }
 

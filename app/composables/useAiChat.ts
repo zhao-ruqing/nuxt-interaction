@@ -10,7 +10,10 @@ export interface ChatMessage {
 export interface AiAction {
   action: string
   product?: string
+  productId?: number
   specs?: string
+  quantity?: number
+  route?: string
   [key: string]: unknown
 }
 
@@ -83,8 +86,9 @@ function isOnlyActionJson(text: string, action: AiAction): boolean {
 /** 将指令 JSON 转为用户友好的展示文案 */
 export function formatActionMessage(action: AiAction): string {
   if (action.action === 'ORDER') {
-    const specs = action.specs ? `（${action.specs}）` : ''
-    return `好的，已为您准备下单：${action.product || '饮品'}${specs}`
+    const specs = action.specs && action.specs !== '默认' ? `（${action.specs}）` : ''
+    const qty = Number(action.quantity) > 1 ? ` × ${action.quantity}` : ''
+    return `好的，正在为您下单：${action.product || '饮品'}${specs}${qty}`
   }
   if (action.action === 'NAVIGATE') {
     return `好的，正在为您跳转...`
@@ -199,6 +203,12 @@ export function useAiChat() {
       assistantMsg.content = final.displayContent
       assistantMsg.thinking = final.thinking || undefined
       assistantMsg.action = final.action || undefined
+
+      // 检测到指令后自动执行（下单、跳转等）
+      if (import.meta.client && final.action) {
+        const { execute } = useActionExecutor()
+        setTimeout(() => execute(final.action!), 600)
+      }
     }
     catch (e: any) {
       assistantMsg.content = e?.message || '发送失败，请稍后重试'
