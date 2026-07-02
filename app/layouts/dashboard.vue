@@ -3,8 +3,24 @@
     <aside class="sidebar">
       <NuxtLink to="/dashboard" class="sidebar-logo">控制台</NuxtLink>
       <nav class="sidebar-nav">
-        <NuxtLink to="/dashboard" class="nav-item" :class="{ active: route.path === '/dashboard' }">概览</NuxtLink>
-        <NuxtLink to="/dashboard/map" class="nav-item" :class="{ active: route.path === '/dashboard/map' }">地图标注</NuxtLink>
+        <NuxtLink
+          to="/dashboard"
+          class="nav-item"
+          :class="{ active: route.path === '/dashboard' }"
+          >概览</NuxtLink
+        >
+        <NuxtLink
+          to="/dashboard/map"
+          class="nav-item"
+          :class="{ active: route.path === '/dashboard/map' }"
+          >地图标注</NuxtLink
+        >
+        <NuxtLink
+          to="/dashboard/manage-products"
+          class="nav-item"
+          :class="{ active: route.path === '/dashboard/manage-products' }"
+          >商品管理</NuxtLink
+        >
       </nav>
       <div class="sidebar-footer">
         <button class="logout-btn" @click="handleLogout">退出登录</button>
@@ -23,15 +39,15 @@
 </template>
 
 <script setup lang="ts">
-const route = useRoute()
-const userStore = useUserStore()
+const route = useRoute();
+const userStore = useUserStore();
 
-onMounted(() => userStore.fetchUser())
+onMounted(() => userStore.fetchUser());
 
 async function handleLogout() {
-  await useFetch('/api/auth/logout', { method: 'POST' })
-  userStore.clearUser()
-  navigateTo('/')
+  await useFetch("/api/auth/logout", { method: "POST" });
+  userStore.clearUser();
+  navigateTo("/");
 }
 </script>
 
@@ -70,16 +86,16 @@ async function handleLogout() {
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 14px;
-  color: rgba(255, 255, 255, .7);
-  transition: all .15s;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.15s;
 
   &:hover {
-    background: rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
   }
 
   &.active {
-    background: rgba(255, 255, 255, .15);
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
   }
 }
@@ -89,14 +105,14 @@ async function handleLogout() {
   padding: 10px 12px;
   border: none;
   border-radius: 8px;
-  background: rgba(255, 255, 255, .1);
-  color: rgba(255, 255, 255, .7);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
   cursor: pointer;
-  transition: all .15s;
+  transition: all 0.15s;
 
   &:hover {
-    background: rgba(255, 255, 255, .2);
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
   }
 }
