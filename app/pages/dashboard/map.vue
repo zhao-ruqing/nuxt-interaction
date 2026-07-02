@@ -7,7 +7,7 @@
 
       <template v-if="!loading && !errorMsg">
         <div class="map-toolbar">
-          <el-select v-model="searchCity" class="city-select" placeholder="搜索区域" @change="handleCityChange">
+          <el-select v-model="searchCity" data-ghost-target="map-city-select" class="city-select" placeholder="搜索区域" @change="handleCityChange">
             <el-option
               v-for="item in CITY_OPTIONS"
               :key="item.value"
@@ -17,11 +17,12 @@
           </el-select>
           <el-input
             v-model="searchAddress"
+            data-ghost-target="map-search-input"
             :placeholder="searchPlaceholder"
             clearable
             @keyup.enter="handleAddressSearch"
           />
-          <el-button type="primary" :loading="searching" @click="handleAddressSearch">定位</el-button>
+          <el-button type="primary" data-ghost-target="map-locate-btn" :loading="searching" @click="handleAddressSearch">定位</el-button>
           <el-switch
             v-model="clickModeEnabled"
             inline-prompt
@@ -34,7 +35,7 @@
         <aside class="address-panel">
           <div class="panel-header">
             <span>地址列表</span>
-            <el-button text size="small" :loading="listLoading" @click="fetchAddressList">刷新</el-button>
+            <el-button text size="small" data-ghost-target="map-refresh-btn" :loading="listLoading" @click="fetchAddressList">刷新</el-button>
           </div>
           <div v-if="addressList.length === 0" class="panel-empty">暂无保存的地址</div>
           <ul v-else class="address-list">
@@ -48,15 +49,15 @@
               <div class="address-text">{{ item.address }}</div>
               <div class="address-coord">{{ item.lng }}, {{ item.lat }}</div>
               <div class="address-actions" @click.stop>
-                <el-button text size="small" @click="openEditDialog(item)">编辑</el-button>
-                <el-button text size="small" type="danger" @click="handleDeleteAddress(item)">删除</el-button>
+                <el-button text size="small" :data-ghost-target="'address-edit-' + item.id" @click="openEditDialog(item)">编辑</el-button>
+                <el-button text size="small" type="danger" :data-ghost-target="'address-delete-' + item.id" @click="handleDeleteAddress(item)">删除</el-button>
               </div>
             </li>
           </ul>
         </aside>
 
         <div v-if="pendingVisible" class="pending-panel" :class="{ expanded: pendingExpanded }">
-          <div class="pending-header" @click="pendingExpanded = !pendingExpanded">
+          <div class="pending-header" data-ghost-target="map-pending-header" @click="pendingExpanded = !pendingExpanded">
             <span class="pending-title">{{ markerData.address || '待保存地址' }}</span>
             <span class="pending-toggle">{{ pendingExpanded ? '▲' : '▼' }}</span>
           </div>
@@ -71,11 +72,11 @@
             </div>
             <div class="info-row">
               <span class="info-label">地址</span>
-              <el-input v-model="markerData.address" placeholder="地址描述" :disabled="isExistingSelection" />
+              <el-input v-model="markerData.address" data-ghost-target="map-pending-address" placeholder="地址描述" :disabled="isExistingSelection" />
             </div>
             <div class="pending-footer">
               <el-button @click="pendingVisible = false">关闭</el-button>
-              <el-button v-if="!isExistingSelection" type="primary" :loading="saving" @click="handleSaveAddress">保存地址</el-button>
+              <el-button v-if="!isExistingSelection" type="primary" data-ghost-target="map-save-btn" :loading="saving" @click="handleSaveAddress">保存地址</el-button>
             </div>
           </div>
         </div>
@@ -94,12 +95,12 @@
             <el-input :model-value="editForm.lat" disabled />
           </el-form-item>
           <el-form-item label="地址">
-            <el-input v-model="editForm.address" placeholder="地址描述" />
+            <el-input v-model="editForm.address" data-ghost-target="map-edit-address" placeholder="地址描述" />
           </el-form-item>
         </el-form>
         <template #footer>
           <el-button @click="editDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="editing" @click="handleUpdateAddress">保存</el-button>
+          <el-button type="primary" data-ghost-target="map-edit-save" :loading="editing" @click="handleUpdateAddress">保存</el-button>
         </template>
       </el-dialog>
 
@@ -111,6 +112,8 @@
 </template>
 
 <script setup lang="ts">
+import { useAdminAutomationStore } from '~/stores/adminAutomation'
+
 definePageMeta({
   layout: 'dashboard',
   middleware: 'auth',
@@ -454,6 +457,30 @@ onMounted(async () => {
 
     loading.value = false
     await fetchAddressList()
+
+    // 优先检查是否有 AI 自动化任务（幽灵手）
+    const adminStore = useAdminAutomationStore()
+    const taskType = adminStore.task?.type
+    if (adminStore.task?.status === 'pending' && taskType?.startsWith('MAP_')) {
+      const { run } = useAdminAutomation()
+      setTimeout(() => run(), 800)
+    } else {
+      // 兜底：处理 URL 查询参数
+      const route = useRoute()
+      const qKeyword = route.query.searchKeyword as string
+      const qCity = route.query.searchCity as string
+      if (qKeyword) {
+        if (qCity) {
+          searchCity.value = qCity
+          applyGeocoderCity()
+          applyMapCityView(false)
+        }
+        setTimeout(() => {
+          searchAddress.value = qKeyword
+          handleAddressSearch()
+        }, 600)
+      }
+    }
   } catch (err: any) {
     loading.value = false
     errorMsg.value = `地图加载失败：${err?.message || '未知错误'}`

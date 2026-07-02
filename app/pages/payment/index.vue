@@ -115,6 +115,7 @@
 <script setup lang="ts">
 import type { Product, ProductDetailResponse } from '~/types/product'
 import { validateOrderQuantity } from '~/composables/useActionExecutor'
+import { useOrderAutomationStore } from '~/stores/orderAutomation'
 
 definePageMeta({ layout: 'default' })
 

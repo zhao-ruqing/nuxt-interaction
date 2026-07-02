@@ -1,5 +1,8 @@
+import { getDifyApiKey } from '../../utils/config'
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
+  const difyApiKey = await getDifyApiKey()
   const body = await readBody(event)
 
   if (!body?.query?.trim()) {
@@ -17,7 +20,7 @@ export default defineEventHandler(async (event) => {
   const response = await fetch(`${config.difyApiBase}/chat-messages`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${config.difyApiKey}`,
+      'Authorization': `Bearer ${difyApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),

@@ -23,16 +23,19 @@
 | `app/components/AiChatWidget.vue` | 悬浮按钮 + 对话面板 UI                  |
 | `app/composables/useAiChat.ts`    | 对话状态管理、SSE 解析、指令 JSON 提取  |
 | `server/api/ai/chat.post.ts`      | Dify API 流式代理（API Key 仅存服务端） |
-| `nuxt.config.ts`                  | `difyApiKey`、`difyApiBase` 运行时配置  |
+| `server/utils/config.ts`          | 从数据库读取系统配置（含 Dify API Key） |
+| `server/sql/system_configs.sql`   | 系统配置表结构与初始数据                |
+| `nuxt.config.ts`                  | `difyApiBase` 运行时配置                |
 
 ### 2.2 环境配置
 
-API Key 默认写在 `nuxt.config.ts` 的 `runtimeConfig.difyApiKey`，生产环境建议通过环境变量覆盖：
+Dify API Key 存储在 MySQL `system_configs` 表中，不再写入代码仓库。首次部署执行 `server/sql/system_configs.sql` 初始化，后续可直接在数据库更新：
 
-```bash
-# .env
-DIFY_API_KEY=app-F3VCgpqjGCoWKXMu22vAEL2f
+```sql
+UPDATE system_configs SET config_value = '你的新Key' WHERE config_key = 'dify_api_key';
 ```
+
+也可通过环境变量 `DIFY_API_KEY` 作为备用（数据库无值时生效）。
 
 ---
 
@@ -278,8 +281,255 @@ mysql -u root -p nuxt_interaction < server/sql/products.sql
 
 ---
 
-第四阶段:
+---
+## 10. 第四阶段：后台管理 AI 自动化
 
-1. 商品后台管理平台 - 自己写
-2. 编写后台管理需要的prompt
-3. 后台接入ai自动处理增删改查
+### 10.1 架构设计
+
+Dify 工作流采用**意图路由 + 分流处理**模式：
+
+```
+用户输入
+  │
+  ▼
+┌──────────────────┐
+│  意图分类器       │  ← 判断是「订单需求」还是「后台管理需求」
+└──────┬───────────┘
+       │
+       ├── 订单需求 ──▶ Prompt A（ORDER 提示词，已有）
+       │
+       └── 管理需求 ──▶ Prompt B（后台管理提示词，见下方）
+                             │
+                             ▼
+                    useActionExecutor 分派：
+                      PRODUCT_CREATE   → POST /api/products
+                      PRODUCT_UPDATE   → PUT /api/products/{id}
+                      PRODUCT_DELETE   → DELETE /api/products/{id}
+                      PRODUCT_SEARCH   → navigateTo 商品管理页
+                      MAP_ADD_ADDRESS  → POST /api/addresses
+                      MAP_UPDATE_ADDRESS → PUT /api/addresses/{id}
+                      MAP_DELETE_ADDRESS → DELETE /api/addresses/{id}
+                      MAP_SEARCH_LOCATION → navigateTo 地图页
+                      MAP_LIST_ADDRESSES → navigateTo 地图页
+```
+
+### 10.2 代码与 Action 对应关系
+
+| action | 代码位置 | 核心字段 |
+|--------|----------|----------|
+| `PRODUCT_CREATE` | `useActionExecutor.ts:138` | name, category, price, description, image, specs, tags, stock, rating |
+| `PRODUCT_UPDATE` | `useActionExecutor.ts:181` | productId(或product), changes{...} |
+| `PRODUCT_DELETE` | `useActionExecutor.ts:234` | productId(或product), productName |
+| `PRODUCT_SEARCH` | `useActionExecutor.ts:268` | keyword, category |
+| `MAP_ADD_ADDRESS` | `useActionExecutor.ts:280` | address, lng, lat |
+| `MAP_UPDATE_ADDRESS` | `useActionExecutor.ts:310` | addressId, address, lng, lat |
+| `MAP_DELETE_ADDRESS` | `useActionExecutor.ts:326` | addressId |
+| `MAP_SEARCH_LOCATION` | `useActionExecutor.ts:345` | keyword, city |
+| `MAP_LIST_ADDRESSES` | `useActionExecutor.ts:355` | （无必填字段） |
+
+**关键代码行为说明（编写 Prompt 时必须对齐）：**
+
+1. **分类字段** — `category` 必须用英文 key（`coffee`/`tea`/`juice`/`soda`/`milk`），前端自动通过 `getCategoryName()` 转为中文
+2. **规格字段** — `specs` 是数组 `[{“size”:”规格名”,”price”:数字}]`，非字符串；若用户未指定，默认为 `[{“size”:”默认”,”price”:<商品价格>}]`
+3. **更新操作** — `productId` 和 `product`（名称）二选一即可；`changes` 对象仅包含要修改的字段，前端会先拉取当前数据再合并
+4. **删除操作** — `productId` 和 `product`（名称）二选一，前端通过 `matchProduct()` 模糊匹配后弹出确认框
+5. **地图坐标** — 没有坐标时不应使用 `MAP_ADD_ADDRESS`，应使用 `MAP_SEARCH_LOCATION` 跳转地图页搜索
+6. **所有数字字段** — price/lng/lat/stock/quantity 必须是可以被 `Number()` 解析的合法数字
+
+### 10.3 后台管理 Prompt（配置在 Dify 管理分支中）
+
+```
+# Role
+你是一个纯粹的”意图识别与数据转换网关”，负责将管理员的自然语言指令转化为前端系统可执行的结构化 JSON 数据。
+
+# Rules (绝对死命令)
+1. 你的输出将直接作为代码被系统解析，因此你【绝对不能】输出任何聊天、客套话、解释或 Markdown 的 ```json 标记。
+2. 你的输出内容【必须有且仅有】一个合法的 JSON 字符串，不能有换行。
+3. 分类（category）必须使用英文 key：coffee（咖啡）、tea（茶饮）、juice（果汁）、soda（汽水）、milk（奶茶）。
+4. 所有价格、坐标、库存字段必须是纯数字，不能被引号包裹。
+5. 规格（specs）是数组格式，每项含 size（规格名）和 price（价格）。如果用户没有指定规格，默认生成 [{“size”:”默认”,”price”:<商品价格>}]。
+6. 更新操作只传需要修改的字段到 changes 对象中，不要传全部字段。
+7. 地图标注无需用户提供经纬度或地址 ID —— 只需提供地址名称，前端会自动调用地理编码服务获取坐标，或通过名称模糊匹配找到已有地址。
+
+# Output Format (严格输出格式)
+
+## 商品管理
+{“action”: “PRODUCT_CREATE”, “name”: “商品名”, “category”: “分类key”, “price”: 数字, “description”: “描述”, “image”: “emoji图标”, “specs”: [{“size”: “规格名”, “price”: 数字}], “tags”: [“标签1”], “stock”: 数字, “rating”: 数字}
+{“action”: “PRODUCT_UPDATE”, “productId”: 数字, “changes”: {“price”: 新价格}}
+{“action”: “PRODUCT_UPDATE”, “product”: “商品名”, “changes”: {“stock”: 新库存, “price”: 新价格}}
+{“action”: “PRODUCT_DELETE”, “productId”: 数字}
+{“action”: “PRODUCT_DELETE”, “product”: “商品名”}
+{“action”: “PRODUCT_SEARCH”, “keyword”: “关键词”, “category”: “分类key”}
+{“action”: “PRODUCT_SEARCH”, “category”: “分类key”}
+
+## 地图标注
+{“action”: “MAP_ADD_ADDRESS”, “address”: “地址描述”}
+{“action”: “MAP_UPDATE_ADDRESS”, “address”: “原地址名”, “newAddress”: “新地址名”}
+{“action”: “MAP_DELETE_ADDRESS”, “address”: “地址名称”}
+{“action”: “MAP_SEARCH_LOCATION”, “keyword”: “地点名”, “city”: “城市名”}
+{“action”: “MAP_LIST_ADDRESSES”}
+
+# Few-Shot Examples (少样本学习)
+
+## 商品创建
+用户输入: 添加商品：抹茶拿铁，分类茶饮，价格28元，日式抹茶与牛奶的完美融合
+系统输出: {“action”: “PRODUCT_CREATE”, “name”: “抹茶拿铁”, “category”: “tea”, “price”: 28, “description”: “日式抹茶与牛奶的完美融合”, “image”: “🍵”, “specs”: [{“size”: “默认”, “price”: 28}], “tags”: [“抹茶”, “拿铁”], “stock”: 0, “rating”: 5}
+
+用户输入: 创建一个新品：冰美式，咖啡类，18元，描述是”冰爽美式咖啡”，图标🧊，中杯15大杯20，标签冰饮、咖啡
+系统输出: {“action”: “PRODUCT_CREATE”, “name”: “冰美式”, “category”: “coffee”, “price”: 18, “description”: “冰爽美式咖啡”, “image”: “🧊”, “specs”: [{“size”: “中杯”, “price”: 15}, {“size”: “大杯”, “price”: 20}], “tags”: [“冰饮”, “咖啡”], “stock”: 0, “rating”: 5}
+
+## 商品更新
+用户输入: 把美式咖啡的价格改为25元
+系统输出: {“action”: “PRODUCT_UPDATE”, “product”: “美式咖啡”, “changes”: {“price”: 25}}
+
+用户输入: 更新商品ID为3的商品，库存改为200，价格改为30
+系统输出: {“action”: “PRODUCT_UPDATE”, “productId”: 3, “changes”: {“stock”: 200, “price”: 30}}
+
+用户输入: 把可乐的标签加上”碳酸”和”经典”
+系统输出: {“action”: “PRODUCT_UPDATE”, “product”: “可乐”, “changes”: {“tags”: [“碳酸”, “经典”]}}
+
+## 商品删除
+用户输入: 删除美式咖啡
+系统输出: {“action”: “PRODUCT_DELETE”, “product”: “美式咖啡”}
+
+用户输入: 删除ID为5的商品
+系统输出: {“action”: “PRODUCT_DELETE”, “productId”: 5}
+
+## 商品搜索
+用户输入: 查看所有咖啡类商品
+系统输出: {“action”: “PRODUCT_SEARCH”, “category”: “coffee”}
+
+用户输入: 搜索抹茶
+系统输出: {“action”: “PRODUCT_SEARCH”, “keyword”: “抹茶”}
+
+用户输入: 看看茶饮分类下有没有抹茶相关的
+系统输出: {“action”: “PRODUCT_SEARCH”, “category”: “tea”, “keyword”: “抹茶”}
+
+## 地图标注（新增 → 前端自动搜索+保存，无需经纬度）
+用户输入: 标注地址：上海市南京路步行街
+系统输出: {“action”: “MAP_ADD_ADDRESS”, “address”: “上海市南京路步行街”}
+
+用户输入: 帮我添加一个北京天安门的标注
+系统输出: {“action”: “MAP_ADD_ADDRESS”, “address”: “北京天安门”}
+
+用户输入: 在地图上标注一下东方明珠
+系统输出: {“action”: “MAP_ADD_ADDRESS”, “address”: “东方明珠”}
+
+## 地图搜索
+用户输入: 在地图上找一下北京天安门
+系统输出: {“action”: “MAP_SEARCH_LOCATION”, “keyword”: “北京天安门”, “city”: “北京”}
+
+用户输入: 搜索上海的东方明珠
+系统输出: {“action”: “MAP_SEARCH_LOCATION”, “keyword”: “东方明珠”, “city”: “上海”}
+
+## 地图标注更新/删除（前端按名称模糊匹配 → 直接调 API）
+用户输入: 把北京天安门的标注改成天安门广场
+系统输出: {“action”: “MAP_UPDATE_ADDRESS”, “address”: “北京天安门”, “newAddress”: “天安门广场”}
+
+用户输入: 删除南京路步行街的标注
+系统输出: {“action”: “MAP_DELETE_ADDRESS”, “address”: “南京路步行街”}
+
+用户输入: 查看所有标注
+系统输出: {“action”: “MAP_LIST_ADDRESSES”}
+
+# Exception Handling (防御性边界)
+- 如果用户输入与商品管理、地图标注均无关，严格输出：
+{“action”: “NONE”}
+- 如果创建商品时缺少名称或分类等必要字段，仍尽力输出已有信息，缺失字段由前端校验提示
+- 如果用户只说”更新商品”但未指明哪个商品/修改什么，不要凭空编造
+```
+
+### 10.4 前端消费流程
+
+```
+sanitizeAiResponse(rawText)
+  │ stripThinkingTags() 去思考块
+  │ parseAiAction() 正则提取 JSON → AiAction
+  │ formatActionMessage() 生成友好文案展示在气泡中
+  ▼
+useActionExecutor().execute(action)
+  │ switch(action.action)
+  │   PRODUCT_CREATE   → 校验字段 → POST /api/products → ElMessage
+  │   PRODUCT_UPDATE   → matchProduct() → 拉取当前数据 → 合并 changes → PUT → ElMessage
+  │   PRODUCT_DELETE   → matchProduct() → ElMessageBox.confirm → DELETE → ElMessage
+  │   PRODUCT_SEARCH   → navigateTo(/dashboard/manage-products?keyword=&category=)
+  │   MAP_ADD_ADDRESS  → 校验坐标 → POST /api/addresses 或 无坐标时跳转地图
+  │   MAP_UPDATE_ADDRESS → PUT /api/addresses/{id}
+  │   MAP_DELETE_ADDRESS → ElMessageBox.confirm → DELETE /api/addresses/{id}
+  │   MAP_SEARCH_LOCATION → navigateTo(/dashboard/map?searchKeyword=&searchCity=)
+  │   MAP_LIST_ADDRESSES → navigateTo(/dashboard/map)
+  ▼
+操作完成，ElMessage 反馈结果
+```
+
+### 10.5 涉及文件
+
+| 文件 | 说明 |
+|------|------|
+| `app/composables/useAiChat.ts` | `formatActionMessage` 新增 9 种管理 action 文案；`sendMessage` 支持 `inputs` 参数 |
+| `app/composables/useActionExecutor.ts` | 管理端操作改为设置自动化任务 + 跳转页面，由幽灵手执行（不再直接调 API） |
+| `app/composables/useGhostHand.ts` | 新增 `fillInput`、`fillNumberInput`、`selectOption`、`waitForSelector` 表单操作能力 |
+| `app/composables/useAdminAutomation.ts` | **新增** — 管理端幽灵手自动化编排（创建/更新/删除/搜索全流程） |
+| `app/stores/adminAutomation.ts` | **新增** — 管理端自动化任务状态管理（`useAdminAutomationStore`） |
+| `app/pages/dashboard/index.vue` | 后台聊天面板，传递 `{context:'admin'}` 上下文给 Dify |
+| `app/pages/dashboard/manage-products.vue` | 添加全部 `data-ghost-target` 标记 + `onMounted` 触发自动化任务 |
+| `app/pages/dashboard/map.vue` | 支持 URL 参数 `searchKeyword`/`searchCity` 自动搜索 |
+| `server/api/ai/chat.post.ts` | 透传 `inputs` 到 Dify，无需修改 |
+
+### 10.6 幽灵手自动化流程
+
+```
+用户输入 "添加商品抹茶拿铁，28元，茶饮"
+  │
+  ▼
+Dify → {"action":"PRODUCT_CREATE","name":"抹茶拿铁","category":"tea","price":28,...}
+  │
+  ▼
+useActionExecutor.execute()
+  │ executeProductCreate() → useAdminAutomationStore.setTask({type:'PRODUCT_CREATE',data:{...}})
+  │ navigateTo('/dashboard/manage-products')
+  ▼
+manage-products.vue onMounted
+  │ 检测到 adminStore.task.status === 'pending'
+  │ 调用 useAdminAutomation().run()
+  ▼
+幽灵手执行序列：
+  1. 点击 [data-ghost-target="btn-create"]         → 弹出新增对话框
+  2. fillInput('[data-ghost-target="form-name"]', '抹茶拿铁')
+  3. selectOption('[data-ghost-target="form-category"]', '茶饮')
+  4. fillNumberInput('[data-ghost-target="form-price"]', 28)
+  5. fillInput('[data-ghost-target="form-description"]', '...')
+  6. ... (填写其他字段)
+  7. 点击 [data-ghost-target="btn-save"]           → 提交保存
+  │
+  ▼
+ElMessage.success('商品「抹茶拿铁」创建完成')
+adminStore.clear()
+```
+
+### 10.7 Ghost Target 标记清单
+
+| 标记 | 位置 | 用途 |
+|------|------|------|
+| `btn-create` | 新增商品按钮 | 打开创建对话框 |
+| `search-category` | 筛选分类下拉 | 分类筛选 |
+| `search-keyword` | 搜索关键词输入 | 关键词输入 |
+| `btn-search` | 查询按钮 | 触发搜索 |
+| `edit-{id}` | 表格行编辑按钮 | 打开编辑对话框 |
+| `delete-{id}` | 表格行删除按钮 | 触发删除 |
+| `form-name` | 名称输入框 | 商品名称 |
+| `form-category` | 分类下拉 | 商品分类 |
+| `form-image` | 图标输入 | 商品图标 |
+| `form-price` | 售价输入 | 默认售价 |
+| `form-original-price` | 原价输入 | 原价 |
+| `form-description` | 描述文本框 | 商品描述 |
+| `form-rating` | 评分输入 | 评分 |
+| `form-stock` | 库存输入 | 库存数量 |
+| `form-sales` | 销量输入 | 销量 |
+| `form-tags` | 标签选择器 | 标签 |
+| `form-ingredients` | 配料选择器 | 配料 |
+| `spec-size-{i}` | 规格名称输入 | 第 i 个规格名称 |
+| `spec-price-{i}` | 规格价格输入 | 第 i 个规格价格 |
+| `btn-add-spec` | 添加规格按钮 | 追加规格行 |
+| `btn-save` | 保存按钮 | 提交表单 |
+| `btn-cancel` | 取消按钮 | 关闭对话框 |

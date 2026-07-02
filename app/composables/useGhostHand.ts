@@ -74,10 +74,91 @@ export function useGhostHand() {
     )
   }
 
+  /** 查找目标元素内的实际 input/textarea */
+  function findInputEl(target: HTMLElement): HTMLElement | null {
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return target
+    return target.querySelector('input:not([type="hidden"]), textarea') as HTMLElement | null
+  }
+
+  /** 等待元素出现在 DOM 中 */
+  async function waitForSelector(selector: string, timeout = 5000): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const el = document.querySelector(selector) as HTMLElement | null
+      if (el) return el
+      await wait(200)
+    }
+    return null
+  }
+
+  /** 填写输入框：点击聚焦 → 清空 → 逐字输入 */
+  async function fillInput(selector: string, text: string) {
+    const el = await waitForSelector(selector)
+    if (!el) { console.warn(`[GhostHand] 未找到元素: ${selector}`); return }
+
+    await tap(el)
+    await wait(300)
+
+    const input = findInputEl(el) || el
+    // 清空已有内容
+    if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+      input.focus()
+      input.select()
+      await wait(150)
+      // 直接用原生方式设置值并触发事件，比逐字输入更可靠
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype, 'value',
+      )?.set || Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(input, text)
+      } else {
+        input.value = text
+      }
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+      input.dispatchEvent(new Event('blur', { bubbles: true }))
+    }
+    await wait(300)
+  }
+
+  /** 操作 el-select：点击展开 → 选中指定选项 */
+  async function selectOption(selector: string, optionText: string) {
+    const el = await waitForSelector(selector)
+    if (!el) { console.warn(`[GhostHand] 未找到元素: ${selector}`); return }
+
+    // 点击 select 触发下拉
+    await tap(el)
+    await wait(500)
+
+    // 从弹出层中找到目标选项并点击
+    const options = document.querySelectorAll('.el-select-dropdown:not(.is-hidden) .el-select-dropdown__item')
+    for (const opt of options) {
+      if (opt.textContent?.trim() === optionText) {
+        await tap(opt as HTMLElement)
+        await wait(300)
+        return
+      }
+    }
+    // 如果没找到精确匹配，点击第一个（兜底）
+    if (options.length > 0) {
+      await tap(options[0] as HTMLElement)
+      await wait(300)
+    }
+  }
+
+  /** 操作 el-input-number：点击聚焦 → 清空 → 填入数字 */
+  async function fillNumberInput(selector: string, value: number) {
+    await fillInput(selector, String(value))
+  }
+
   onUnmounted(() => {
     cursorEl.value?.remove()
     cursorEl.value = null
   })
 
-  return { isActive, moveTo, click, tap, tapSelector, hide }
+  return {
+    isActive, moveTo, click, tap, tapSelector, hide,
+    fillInput, fillNumberInput, selectOption, waitForSelector, wait,
+  }
 }

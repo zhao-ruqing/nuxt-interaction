@@ -1,11 +1,19 @@
 <template>
-  <div class="ai-widget">
+  <div
+    ref="widgetRef"
+    class="ai-widget"
+    :class="{ dragging: isDragging }"
+    :style="widgetStyle"
+  >
     <!-- 悬浮按钮 -->
     <button
       class="fab"
       :class="{ active: isOpen }"
       aria-label="打开 AI 助手"
-      @click="togglePanel"
+      @pointerdown="(e) => startDrag(e, 'fab')"
+      @pointermove="onDrag"
+      @pointerup="(e) => endDrag(e, 'fab')"
+      @pointercancel="(e) => endDrag(e, 'fab')"
     >
       <span v-if="!isOpen" class="fab-icon">🤖</span>
       <span v-else class="fab-icon">✕</span>
@@ -13,8 +21,18 @@
 
     <!-- 对话面板 -->
     <Transition name="panel">
-      <div v-if="isOpen" class="chat-panel">
-        <div class="panel-header">
+      <div
+        v-if="isOpen"
+        class="chat-panel"
+        :class="{ 'panel-below': panelBelow }"
+      >
+        <div
+          class="panel-header"
+          @pointerdown="(e) => startDrag(e, 'header')"
+          @pointermove="onDrag"
+          @pointerup="(e) => endDrag(e, 'header')"
+          @pointercancel="(e) => endDrag(e, 'header')"
+        >
           <div class="header-info">
             <span class="header-icon">🤖</span>
             <div>
@@ -22,7 +40,7 @@
               <p>试试说「帮我点一杯咖啡」</p>
             </div>
           </div>
-          <button class="clear-btn" title="清空对话" @click="clearMessages">清空</button>
+          <button class="clear-btn" title="清空对话" @pointerdown.stop @click="clearMessages">清空</button>
         </div>
 
         <div ref="messageListRef" class="message-list">
@@ -94,12 +112,86 @@
 </template>
 
 <script setup lang="ts">
+import { useOrderAutomationStore } from '~/stores/orderAutomation'
+
 const { messages, isStreaming, sendMessage, clearMessages } = useAiChat()
 const orderStore = useOrderAutomationStore()
 
 const isOpen = ref(false)
 const inputText = ref('')
 const messageListRef = ref<HTMLElement>()
+const widgetRef = ref<HTMLElement>()
+
+const pos = ref({ x: 0, y: 0 })
+const isDragging = ref(false)
+const hasMoved = ref(false)
+const dragState = { startX: 0, startY: 0, originX: 0, originY: 0 }
+
+const widgetStyle = computed(() => ({
+  left: `${pos.value.x}px`,
+  top: `${pos.value.y}px`,
+}))
+
+const panelBelow = computed(() => pos.value.y < 592)
+
+function getEdgeMargin() {
+  return window.innerWidth <= 640 ? 16 : 24
+}
+
+function clampPosition(x: number, y: number) {
+  const el = widgetRef.value
+  if (!el) return { x, y }
+  const maxX = Math.max(0, window.innerWidth - el.offsetWidth)
+  const maxY = Math.max(0, window.innerHeight - el.offsetHeight)
+  return {
+    x: Math.min(Math.max(0, x), maxX),
+    y: Math.min(Math.max(0, y), maxY),
+  }
+}
+
+function initPosition() {
+  const el = widgetRef.value
+  if (!el) return
+  const margin = getEdgeMargin()
+  pos.value = clampPosition(
+    window.innerWidth - el.offsetWidth - margin,
+    window.innerHeight - el.offsetHeight - margin,
+  )
+}
+
+function startDrag(e: PointerEvent, _source: 'fab' | 'header') {
+  if (e.button !== 0) return
+  isDragging.value = true
+  hasMoved.value = false
+  dragState.startX = e.clientX
+  dragState.startY = e.clientY
+  dragState.originX = pos.value.x
+  dragState.originY = pos.value.y
+  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+}
+
+function onDrag(e: PointerEvent) {
+  if (!isDragging.value) return
+  const dx = e.clientX - dragState.startX
+  const dy = e.clientY - dragState.startY
+  if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved.value = true
+  pos.value = clampPosition(dragState.originX + dx, dragState.originY + dy)
+}
+
+function endDrag(e: PointerEvent, source: 'fab' | 'header') {
+  if (!isDragging.value) return
+  const moved = hasMoved.value
+  isDragging.value = false
+  try {
+    ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+  }
+  catch { /* 已释放 */ }
+  if (!moved && source === 'fab') togglePanel()
+}
+
+function onWindowResize() {
+  pos.value = clampPosition(pos.value.x, pos.value.y)
+}
 
 const orderStatusText = computed(() => {
   const o = orderStore.pending
@@ -142,14 +234,27 @@ function scrollToBottom() {
 watch(messages, () => {
   nextTick(() => scrollToBottom())
 }, { deep: true })
+
+onMounted(() => {
+  nextTick(initPosition)
+  window.addEventListener('resize', onWindowResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onWindowResize)
+})
 </script>
 
 <style scoped lang="scss">
 .ai-widget {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
   z-index: 1000;
+  touch-action: none;
+
+  &.dragging .fab {
+    transform: none;
+    cursor: grabbing;
+  }
 }
 
 .fab {
@@ -160,7 +265,9 @@ watch(messages, () => {
   color: #fff;
   font-size: 24px;
   box-shadow: 0 4px 20px rgba($primary, 0.45);
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   align-items: center;
@@ -189,6 +296,11 @@ watch(messages, () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  &.panel-below {
+    top: 72px;
+    bottom: auto;
+  }
 }
 
 .panel-enter-active,
@@ -209,6 +321,9 @@ watch(messages, () => {
   padding: 16px 20px;
   background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
   color: #fff;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 
   h3 {
     font-size: 16px;
@@ -464,11 +579,6 @@ watch(messages, () => {
 }
 
 @media (max-width: $breakpoint-sm) {
-  .ai-widget {
-    right: 16px;
-    bottom: 16px;
-  }
-
   .chat-panel {
     width: calc(100vw - 32px);
     height: calc(100vh - 120px);

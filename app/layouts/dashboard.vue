@@ -54,7 +54,8 @@ async function handleLogout() {
 <style scoped lang="scss">
 .dashboard-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -122,6 +123,8 @@ async function handleLogout() {
   display: flex;
   flex-direction: column;
   background: $bg-gray;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .topbar {
@@ -146,6 +149,8 @@ async function handleLogout() {
 
 .content {
   flex: 1;
+  min-height: 0;
   padding: 24px;
+  overflow-y: auto;
 }
 </style>

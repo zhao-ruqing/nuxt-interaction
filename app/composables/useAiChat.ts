@@ -96,6 +96,35 @@ export function formatActionMessage(action: AiAction): string {
   if (action.action === 'SEARCH') {
     return `好的，正在为您搜索${action.product ? `「${action.product}」` : ''}...`
   }
+  // ---- 后台管理：商品 CRUD ----
+  if (action.action === 'PRODUCT_CREATE') {
+    return `好的，正在创建商品「${(action as any).name || ''}」...`
+  }
+  if (action.action === 'PRODUCT_UPDATE') {
+    return `好的，正在更新商品信息...`
+  }
+  if (action.action === 'PRODUCT_DELETE') {
+    return `好的，正在删除商品「${(action as any).productName || (action as any).product || ''}」...`
+  }
+  if (action.action === 'PRODUCT_SEARCH') {
+    return `好的，正在为您查找${(action as any).keyword ? `「${(action as any).keyword}」` : '商品'}...`
+  }
+  // ---- 后台管理：地图标注 ----
+  if (action.action === 'MAP_ADD_ADDRESS') {
+    return `好的，正在添加地址标注「${(action as any).address || ''}」...`
+  }
+  if (action.action === 'MAP_UPDATE_ADDRESS') {
+    return `好的，正在更新地址标注...`
+  }
+  if (action.action === 'MAP_DELETE_ADDRESS') {
+    return `好的，正在删除地址标注...`
+  }
+  if (action.action === 'MAP_SEARCH_LOCATION') {
+    return `好的，正在地图上搜索「${(action as any).keyword || ''}」...`
+  }
+  if (action.action === 'MAP_LIST_ADDRESSES') {
+    return `好的，正在加载地址列表...`
+  }
   return '已收到操作指令，即将为您处理'
 }
 
@@ -108,8 +137,15 @@ export function sanitizeAiResponse(text: string): SanitizedResponse {
   if (action && isOnlyActionJson(cleaned, action)) {
     displayContent = formatActionMessage(action)
   }
-  else if (!displayContent && action) {
-    displayContent = formatActionMessage(action)
+  else if (action) {
+    // 从展示文本中移除 JSON 块，只保留自然语言部分
+    const jsonBlock = cleaned.match(/\{[\s\S]*?"action"[\s\S]*?\}/)
+    if (jsonBlock) {
+      displayContent = cleaned.replace(jsonBlock[0], '').trim()
+    }
+    if (!displayContent) {
+      displayContent = formatActionMessage(action)
+    }
   }
 
   return { displayContent, thinking, action }
@@ -120,7 +156,7 @@ export function useAiChat() {
   const conversationId = ref('')
   const isStreaming = ref(false)
 
-  async function sendMessage(query: string) {
+  async function sendMessage(query: string, inputs: Record<string, unknown> = {}) {
     if (!query.trim() || isStreaming.value) return
 
     const userMsg: ChatMessage = {
@@ -145,6 +181,7 @@ export function useAiChat() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          inputs,
           query: query.trim(),
           conversation_id: conversationId.value || undefined,
         }),

@@ -42,8 +42,7 @@ export default defineNuxtConfig({
   // 运行时全局变量
   runtimeConfig: {
     count: 0, // 写在外面的是服务端的变量,在客户端是访问不到的
-    // Dify AI 配置（仅服务端可访问，可通过环境变量 DIFY_API_KEY 覆盖）
-    difyApiKey: process.env.DIFY_API_KEY || 'app-F3VCgpqjGCoWKXMu22vAEL2f',
+    // Dify AI 配置（API Key 存于数据库 system_configs 表，环境变量 DIFY_API_KEY 为备用）
     difyApiBase: 'https://api.dify.ai/v1',
     // public表示在客户端和服务端都可以访问的变量
     public: {
