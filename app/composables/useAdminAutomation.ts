@@ -397,8 +397,13 @@ export function useAdminAutomation() {
         default: store.updateStatus('failed', `未知任务: ${t.type}`); scheduleGhostCleanup(ghost)
       }
     } catch (e: any) {
-      store.updateStatus('failed', e?.message || '操作失败')
-      ElMessage.error('自动化操作失败')
+      if (e?.message === 'GHOST_ABORTED') {
+        // 用户移动鼠标主动中止，ElMessage.warning 已在 useGhostHand 中触发
+        store.updateStatus('failed', '用户取消')
+      } else {
+        store.updateStatus('failed', e?.message || '操作失败')
+        ElMessage.error('自动化操作失败')
+      }
     } finally {
       // 确保幽灵手最终一定会消失
       scheduleGhostCleanup(ghost, 800)

@@ -29,6 +29,9 @@ importers:
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@parcel/watcher@2.5.6)(@types/node@26.0.0)(@vue/compiler-sfc@3.5.38)(cac@6.7.14)(db0@0.3.4(mysql2@3.22.5(@types/node@26.0.0)))(esbuild@0.28.1)(ioredis@5.11.1)(magicast@0.5.3)(mysql2@3.22.5(@types/node@26.0.0))(pinia@3.0.4(vue@3.5.38))(rollup-plugin-visualizer@7.0.1(rollup@4.62.2))(rollup@4.62.2)(sass@1.101.0)(srvx@0.11.17)(terser@5.48.0)(vite@7.3.5(@types/node@26.0.0)(jiti@2.7.0)(sass@1.101.0)(terser@5.48.0)(yaml@2.9.0))(yaml@2.9.0)
+      page-agent:
+        specifier: ^1.10.0
+        version: 1.10.0(zod@4.4.3)
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(vue@3.5.38)
@@ -1118,6 +1121,22 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@page-agent/core@1.10.0':
+    resolution: {integrity: sha512-A4bJNFeQJH7RX/sKDTp72Ckn7cXf2VxqHTGRF53e188piH9JgX1iRJsb+QJspd2PD8YmkXiG6okypE+IY6UVVg==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+
+  '@page-agent/llms@1.10.0':
+    resolution: {integrity: sha512-NMS8OqoQp23jxOf0N+j2xHiUELiMSfaLDwUTFb+BMijXJ7FSmTTnAMjO1wQhNMkfTm0E7ZIomXsLWNMGx5dDkg==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+
+  '@page-agent/page-controller@1.10.0':
+    resolution: {integrity: sha512-Nm8sH2503+qaz2BAOLz/xYZ1dr3rPTqqBPo7q1LtkCcOrU2+YeTgvgQbwAikLHWDRxv+1jfA5Y/3Cf9XsvYWFw==}
+
+  '@page-agent/ui@1.10.0':
+    resolution: {integrity: sha512-jh0mkASUZGv3IpC5x82BzogjHeBDQVgXrH0Z4YA8R6kWLDEYeEjxcCM1J0Wf9s+FsY6jknpwUuscxDo6wy5puw==}
+
   '@parcel/watcher-android-arm64@2.5.6':
     resolution: {integrity: sha512-YQxSS34tPF/6ZG7r/Ih9xy+kP/WwediEUsqmtf0cuCV5TPPKw/PQHRhueUo6JdeFJaqV3pyjm0GdYjZotbRt/A==}
     engines: {node: '>= 10.0.0'}
@@ -1626,6 +1645,9 @@ packages:
     resolution: {integrity: sha512-k2/tQ1+8Zf50dEUJWklUP80LcE/+Ph+OJ6cf2Ff2fD/c/TtCe6ofnCoNMz9UnyxOQYlaAALZtEWETzn+1JjfHg==}
     engines: {node: '>= 14'}
 
+  ai-motion@0.4.8:
+    resolution: {integrity: sha512-9nQVjf8lrYQWSW0sZdb9bES4x8Ei1w9C0S62po2KvRbMjslmjm0WMeszyW771SEauDnu4YGWqurLZ/gCkCTosQ==}
+
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
     engines: {node: '>=8'}
@@ -1820,6 +1842,10 @@ packages:
 
   caniuse-lite@1.0.30001799:
     resolution: {integrity: sha512-hG1bReV+OUU+MOqK4t/ZWI0tZOyz3rqS9XuhOUz1cIcbwBKjOyJEJuw9ER5JuNyqxNk8u/JUVbGibBOL1yrjFw==}
+
+  chalk@5.6.2:
+    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   chokidar@5.0.0:
     resolution: {integrity: sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw==}
@@ -2768,6 +2794,11 @@ packages:
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
+
+  page-agent@1.10.0:
+    resolution: {integrity: sha512-jqDrTHgKT0mRSKCd7kFt3gUPgafczrAWqV/Ki7bBaLo8JsG1zzGnUW2wVftM3hTW9u47txv+JDlESz/2FX2B2A==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
 
   parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
@@ -3749,6 +3780,9 @@ packages:
   zip-stream@6.0.1:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
 
@@ -4749,6 +4783,24 @@ snapshots:
   '@oxc-transform/binding-win32-x64-msvc@0.133.0':
     optional: true
 
+  '@page-agent/core@1.10.0(zod@4.4.3)':
+    dependencies:
+      '@page-agent/llms': 1.10.0(zod@4.4.3)
+      '@page-agent/page-controller': 1.10.0
+      chalk: 5.6.2
+      zod: 4.4.3
+
+  '@page-agent/llms@1.10.0(zod@4.4.3)':
+    dependencies:
+      chalk: 5.6.2
+      zod: 4.4.3
+
+  '@page-agent/page-controller@1.10.0':
+    dependencies:
+      ai-motion: 0.4.8
+
+  '@page-agent/ui@1.10.0': {}
+
   '@parcel/watcher-android-arm64@2.5.6':
     optional: true
 
@@ -5219,6 +5271,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  ai-motion@0.4.8: {}
+
   ansi-regex@5.0.1: {}
 
   ansi-regex@6.2.2: {}
@@ -5411,6 +5465,8 @@ snapshots:
       caniuse-lite: 1.0.30001799
 
   caniuse-lite@1.0.30001799: {}
+
+  chalk@5.6.2: {}
 
   chokidar@5.0.0:
     dependencies:
@@ -6633,6 +6689,15 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
+  page-agent@1.10.0(zod@4.4.3):
+    dependencies:
+      '@page-agent/core': 1.10.0(zod@4.4.3)
+      '@page-agent/llms': 1.10.0(zod@4.4.3)
+      '@page-agent/page-controller': 1.10.0
+      '@page-agent/ui': 1.10.0
+      chalk: 5.6.2
+      zod: 4.4.3
+
   parseurl@1.3.3: {}
 
   path-key@3.1.1: {}
@@ -7568,3 +7633,5 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.7.0
+
+  zod@4.4.3: {}

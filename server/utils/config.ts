@@ -33,3 +33,14 @@ export async function getDifyApiKey(): Promise<string> {
 
   throw createError({ statusCode: 500, message: '未配置 Dify API Key，请在 system_configs 表中设置 dify_api_key' })
 }
+
+/** 获取 DeepSeek API Key：优先数据库，其次环境变量 */
+export async function getDeepSeekApiKey(): Promise<string> {
+  const fromDb = await getSystemConfig('deepseek_api_key')
+  if (fromDb) return fromDb
+
+  const fromEnv = process.env.DEEPSEEK_API_KEY?.trim()
+  if (fromEnv) return fromEnv
+
+  throw createError({ statusCode: 500, message: '未配置 DeepSeek API Key，请在 system_configs 表中设置 deepseek_api_key' })
+}
