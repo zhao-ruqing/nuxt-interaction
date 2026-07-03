@@ -4,7 +4,7 @@
     <div class="overview-column">
       <h2>欢迎回来，{{ userStore.user?.username }}</h2>
       <p class="welcome-text">这是你的项目控制台，一切从这里开始。</p>
-
+      <button id="errorBtn" @click="triggerError">Trigger Error</button>
       <div class="info-cards">
         <div class="info-card">
           <div class="card-label">用户名</div>
@@ -12,7 +12,9 @@
         </div>
         <div class="info-card">
           <div class="card-label">注册时间</div>
-          <div class="card-value">{{ formatDate(userStore.user?.created_at) }}</div>
+          <div class="card-value">
+            {{ formatDate(userStore.user?.created_at) }}
+          </div>
         </div>
         <div class="info-card">
           <div class="card-label">项目数</div>
@@ -26,23 +28,33 @@
       <div class="chat-panel">
         <div class="chat-header">
           <span class="chat-title">AI 助手</span>
-          <el-button text size="small" @click="clearMessages">清空对话</el-button>
+          <el-button text size="small" @click="clearMessages"
+            >清空对话</el-button
+          >
         </div>
 
         <div ref="chatBodyRef" class="chat-body">
           <div v-if="messages.length === 0" class="chat-empty">
             <div class="chat-empty-icon">🤖</div>
-            <div class="chat-empty-text">我是你的 AI 助手，有什么可以帮你的？</div>
+            <div class="chat-empty-text">
+              我是你的 AI 助手，有什么可以帮你的？
+            </div>
             <div class="chat-suggestions">
               <span
                 v-for="tip in quickTips"
                 :key="tip"
                 class="chat-suggestion-item"
                 @click="sendMessage(tip)"
-              >{{ tip }}</span>
+                >{{ tip }}</span
+              >
             </div>
           </div>
-          <div v-for="msg in messages" :key="msg.id" class="chat-message" :class="msg.role">
+          <div
+            v-for="msg in messages"
+            :key="msg.id"
+            class="chat-message"
+            :class="msg.role"
+          >
             <div class="chat-bubble">
               <!-- 思考过程折叠 -->
               <details v-if="msg.thinking" class="thinking-block">
@@ -84,36 +96,38 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'dashboard',
-  middleware: 'auth',
-})
+  layout: "dashboard",
+  middleware: "auth",
+});
+const triggerError = () => {
+  throw new Error("FUCK BUG!!!!");
+};
+const userStore = useUserStore();
+const { messages, isStreaming, sendMessage, clearMessages } = useAiChat();
 
-const userStore = useUserStore()
-const { messages, isStreaming, sendMessage, clearMessages } = useAiChat()
-
-const inputText = ref('')
-const chatBodyRef = ref<HTMLElement>()
+const inputText = ref("");
+const chatBodyRef = ref<HTMLElement>();
 
 const quickTips = [
-  '添加商品：抹茶拿铁，价格28元，分类茶饮',
-  '查看所有咖啡类商品',
-  '在地图上搜索北京天安门',
-]
+  "添加商品：抹茶拿铁，价格28元，分类茶饮",
+  "查看所有咖啡类商品",
+  "在地图上搜索北京天安门",
+];
 
 function formatDate(dateStr?: string) {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function handleSend() {
-  const text = inputText.value.trim()
-  if (!text || isStreaming.value) return
-  sendMessage(text, { context: 'admin' })
-  inputText.value = ''
+  const text = inputText.value.trim();
+  if (!text || isStreaming.value) return;
+  sendMessage(text, { context: "admin" });
+  inputText.value = "";
 }
 
 // 自动滚动到最新消息
@@ -122,11 +136,11 @@ watch(
   () => {
     nextTick(() => {
       if (chatBodyRef.value) {
-        chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight
+        chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight;
       }
-    })
+    });
   },
-)
+);
 
 // 监听消息内容变化（流式更新时也滚动）
 watch(
@@ -134,11 +148,11 @@ watch(
   () => {
     nextTick(() => {
       if (chatBodyRef.value) {
-        chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight
+        chatBodyRef.value.scrollTop = chatBodyRef.value.scrollHeight;
       }
-    })
+    });
   },
-)
+);
 </script>
 
 <style scoped lang="scss">
@@ -256,14 +270,14 @@ watch(
 .chat-suggestion-item {
   font-size: 13px;
   color: var(--el-color-primary);
-  background: rgba(64, 158, 255, .08);
+  background: rgba(64, 158, 255, 0.08);
   padding: 6px 14px;
   border-radius: 16px;
   cursor: pointer;
-  transition: background .15s;
+  transition: background 0.15s;
 
   &:hover {
-    background: rgba(64, 158, 255, .16);
+    background: rgba(64, 158, 255, 0.16);
   }
 }
 
@@ -306,7 +320,7 @@ watch(
 .thinking-block {
   margin-bottom: 8px;
   font-size: 12px;
-  opacity: .7;
+  opacity: 0.7;
 
   summary {
     cursor: pointer;
@@ -316,7 +330,7 @@ watch(
   p {
     margin-top: 6px;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, .04);
+    background: rgba(0, 0, 0, 0.04);
     border-radius: 6px;
     font-size: 12px;
   }
@@ -335,15 +349,27 @@ watch(
     background: $text-secondary;
     animation: dot-bounce 1.4s infinite ease-in-out both;
 
-    &:nth-child(1) { animation-delay: 0s; }
-    &:nth-child(2) { animation-delay: .16s; }
-    &:nth-child(3) { animation-delay: .32s; }
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+    &:nth-child(2) {
+      animation-delay: 0.16s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.32s;
+    }
   }
 }
 
 @keyframes dot-bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 // ---- 底部输入 ----

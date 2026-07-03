@@ -15,3 +15,7 @@ VALUES ('deepseek_api_key', 'sk-mock-deepseek-key-replace-with-real-one', 'DeepS
 -- 插入 Dify API Key（如已存在则跳过）
 INSERT IGNORE INTO `system_configs` (`config_key`, `config_value`, `description`)
 VALUES ('dify_api_key', 'app-mock-dify-key-replace-with-real-one', 'Dify AI API 密钥');
+
+-- 插入 Sentry DSN（如已存在则跳过）
+INSERT IGNORE INTO `system_configs` (`config_key`, `config_value`, `description`)
+VALUES ('sentry_dsn', '', 'Sentry 错误监控 DSN');

@@ -1,10 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
-  // 配置启动后自动打开浏览器（Nuxt 3推荐方式）
+  // DevTools 调试面板配置
   devtools: {
     enabled: true,
-    open: true,
   },
 
   // 全局样式（仅引入一次）
@@ -13,6 +12,10 @@ export default defineNuxtConfig({
   // 配置 Vite 插件
   // 通过 additionalData 注入变量和 mixins，所有组件 SCSS 可直接使用
   vite: {
+    // 启动 dev server 后自动打开浏览器
+    server: {
+      open: true,
+    },
     // 预构建 CJS 依赖，避免运行时发现新依赖导致页面重载
     optimizeDeps: {
       include: ["@amap/amap-jsapi-loader", "gsap", "gsap/ScrollTrigger"],
@@ -31,7 +34,17 @@ export default defineNuxtConfig({
   serverDir: "./server",
 
   // 导入 Element Plus 组件,使用module的方式导入可以自动配置element-plus组件
-  modules: ["@element-plus/nuxt", "@pinia/nuxt"],
+  modules: ["@element-plus/nuxt", "@pinia/nuxt", "@sentry/nuxt/module"],
+
+  // Sentry 构建期配置（org/project 与 wizard 参数一致）
+  sentry: {
+    org: "zhaoruqing",
+    project: "javascript-nuxt",
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+  },
+
+  // 客户端 Source Map（配合 sentry 上传）
+  sourcemap: { client: "hidden" },
 
   // 运行时全局变量
   runtimeConfig: {

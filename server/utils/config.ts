@@ -44,3 +44,14 @@ export async function getDeepSeekApiKey(): Promise<string> {
 
   throw createError({ statusCode: 500, message: '未配置 DeepSeek API Key，请在 system_configs 表中设置 deepseek_api_key' })
 }
+
+/** 获取 Sentry DSN：优先数据库，其次环境变量 */
+export async function getSentryDsn(): Promise<string | null> {
+  const fromDb = await getSystemConfig('sentry_dsn')
+  if (fromDb) return fromDb
+
+  const fromEnv = process.env.NUXT_PUBLIC_SENTRY_DSN?.trim()
+  if (fromEnv) return fromEnv
+
+  return null
+}
