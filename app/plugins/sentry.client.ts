@@ -23,7 +23,6 @@ export default defineNuxtPlugin({
       replaysOnErrorSampleRate: 1.0,
       integrations: [
         Sentry.replayIntegration(),
-        Sentry.feedbackIntegration({ colorScheme: 'system' }),
       ],
       enableLogs: true,
     })

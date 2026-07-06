@@ -100,6 +100,7 @@ definePageMeta({
   middleware: "auth",
 });
 const triggerError = () => {
+  ElMessage.error("FUCK BUG!!!!");
   throw new Error("FUCK BUG!!!!");
 };
 const userStore = useUserStore();
