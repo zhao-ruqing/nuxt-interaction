@@ -6,5 +6,6 @@
     </NuxtLayout>
     <PageAgentTrigger />
     <AiChatWidget />
+    <SentryErrorTrigger />
   </div>
 </template>

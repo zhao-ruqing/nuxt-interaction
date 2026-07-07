@@ -21,6 +21,12 @@
           :class="{ active: route.path === '/dashboard/manage-products' }"
           >商品管理</NuxtLink
         >
+        <NuxtLink
+          to="/dashboard/personality"
+          class="nav-item"
+          :class="{ active: route.path === '/dashboard/personality' }"
+          >人格测试</NuxtLink
+        >
       </nav>
       <div class="sidebar-footer">
         <button class="logout-btn" @click="handleLogout">退出登录</button>

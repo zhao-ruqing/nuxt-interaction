@@ -4,7 +4,6 @@
     <div class="overview-column">
       <h2>欢迎回来，{{ userStore.user?.username }}</h2>
       <p class="welcome-text">这是你的项目控制台，一切从这里开始。</p>
-      <button id="errorBtn" @click="triggerError">Trigger Error</button>
       <div class="info-cards">
         <div class="info-card">
           <div class="card-label">用户名</div>
@@ -99,10 +98,6 @@ definePageMeta({
   layout: "dashboard",
   middleware: "auth",
 });
-const triggerError = () => {
-  ElMessage.error("FUCK BUG!!!!");
-  throw new Error("FUCK BUG!!!!");
-};
 const userStore = useUserStore();
 const { messages, isStreaming, sendMessage, clearMessages } = useAiChat();
 
