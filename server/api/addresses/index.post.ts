@@ -1,9 +1,9 @@
-import pool from '../../utils/db'
-import { getAuthUser } from '../../utils/auth'
+import { createContext } from '../../utils/context'
+import { createAddress } from '../../services/address.service'
 
 export default defineEventHandler(async (event) => {
-  const user = await getAuthUser(event)
-  if (!user) {
+  const ctx = await createContext(event)
+  if (!ctx) {
     return { success: false, message: '未登录' }
   }
 
@@ -12,15 +12,11 @@ export default defineEventHandler(async (event) => {
     return { success: false, message: '地址和坐标不能为空' }
   }
 
-  const [result] = await pool.query(
-    'INSERT INTO addresses (user_id, address, lng, lat) VALUES (?, ?, ?, ?)',
-    [user.id, address.trim(), lng, lat],
-  ) as any
-
-  const [rows] = await pool.query(
-    'SELECT id, address, lng, lat, created_at, updated_at FROM addresses WHERE id = ?',
-    [result.insertId],
-  ) as any
-
-  return { success: true, data: rows[0] }
+  try {
+    const data = await createAddress(ctx, { address, lng, lat })
+    return { success: true, data }
+  }
+  catch {
+    return { success: false, message: '保存失败，请确认数据库已连接' }
+  }
 })

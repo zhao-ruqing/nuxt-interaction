@@ -1,9 +1,9 @@
-import { getAuthUser } from '../../utils/auth'
-import { deleteProduct } from '../../utils/products'
+import { createContext } from '../../utils/context'
+import { deleteProduct } from '../../services/product.service'
 
 export default defineEventHandler(async (event) => {
-  const user = await getAuthUser(event)
-  if (!user) {
+  const ctx = await createContext(event)
+  if (!ctx) {
     return { success: false, message: '未登录' }
   }
 
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const deleted = await deleteProduct(id)
+    const deleted = await deleteProduct(ctx, id)
     if (!deleted) {
       return { success: false, message: '商品不存在' }
     }

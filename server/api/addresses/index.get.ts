@@ -1,16 +1,12 @@
-import pool from '../../utils/db'
-import { getAuthUser } from '../../utils/auth'
+import { createContext } from '../../utils/context'
+import { listAddresses } from '../../services/address.service'
 
 export default defineEventHandler(async (event) => {
-  const user = await getAuthUser(event)
-  if (!user) {
+  const ctx = await createContext(event)
+  if (!ctx) {
     return { success: false, message: '未登录' }
   }
 
-  const [rows] = await pool.query(
-    'SELECT id, address, lng, lat, created_at, updated_at FROM addresses WHERE user_id = ? ORDER BY created_at DESC',
-    [user.id],
-  ) as any
-
-  return { success: true, data: rows }
+  const data = await listAddresses(ctx.user.id)
+  return { success: true, data }
 })

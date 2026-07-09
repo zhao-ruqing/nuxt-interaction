@@ -1,9 +1,9 @@
-import { getAuthUser } from '../../utils/auth'
-import { parseProductInput, updateProduct } from '../../utils/products'
+import { createContext } from '../../utils/context'
+import { parseProductInput, updateProduct } from '../../services/product.service'
 
 export default defineEventHandler(async (event) => {
-  const user = await getAuthUser(event)
-  if (!user) {
+  const ctx = await createContext(event)
+  if (!ctx) {
     return { success: false, message: '未登录' }
   }
 
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const product = await updateProduct(id, parsed.data)
+    const product = await updateProduct(ctx, id, parsed.data)
     if (!product) {
       return { success: false, message: '商品不存在' }
     }

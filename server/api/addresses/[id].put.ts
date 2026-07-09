@@ -1,35 +1,30 @@
-import pool from '../../utils/db'
-import { getAuthUser } from '../../utils/auth'
+import { createContext } from '../../utils/context'
+import { updateAddress } from '../../services/address.service'
 
 export default defineEventHandler(async (event) => {
-  const user = await getAuthUser(event)
-  if (!user) {
+  const ctx = await createContext(event)
+  if (!ctx) {
     return { success: false, message: '未登录' }
   }
 
-  const id = getRouterParam(event, 'id')
+  const id = Number(getRouterParam(event, 'id'))
+  if (!id || Number.isNaN(id)) {
+    return { success: false, message: '无效的地址 ID' }
+  }
+
   const { address, lng, lat } = await readBody(event)
   if (!address?.trim() || lng == null || lat == null) {
     return { success: false, message: '地址和坐标不能为空' }
   }
 
-  const [existing] = await pool.query(
-    'SELECT id FROM addresses WHERE id = ? AND user_id = ?',
-    [id, user.id],
-  ) as any
-  if (existing.length === 0) {
-    return { success: false, message: '地址不存在' }
+  try {
+    const data = await updateAddress(ctx, id, { address, lng, lat })
+    if (!data) {
+      return { success: false, message: '地址不存在' }
+    }
+    return { success: true, data }
   }
-
-  await pool.query(
-    'UPDATE addresses SET address = ?, lng = ?, lat = ? WHERE id = ? AND user_id = ?',
-    [address.trim(), lng, lat, id, user.id],
-  )
-
-  const [rows] = await pool.query(
-    'SELECT id, address, lng, lat, created_at, updated_at FROM addresses WHERE id = ?',
-    [id],
-  ) as any
-
-  return { success: true, data: rows[0] }
+  catch {
+    return { success: false, message: '更新失败，请确认数据库已连接' }
+  }
 })

@@ -22,6 +22,12 @@
           >商品管理</NuxtLink
         >
         <NuxtLink
+          to="/dashboard/audit-logs"
+          class="nav-item"
+          :class="{ active: route.path === '/dashboard/audit-logs' }"
+          >操作日志</NuxtLink
+        >
+        <NuxtLink
           to="/dashboard/personality"
           class="nav-item"
           :class="{ active: route.path === '/dashboard/personality' }"
