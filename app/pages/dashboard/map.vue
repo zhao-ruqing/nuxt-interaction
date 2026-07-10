@@ -1,12 +1,12 @@
 <template>
-  <div class="map-page">
+  <div class="void-dash-page map-page">
     <ClientOnly>
       <div ref="mapContainerRef" class="map-container" />
       <div v-if="loading" class="map-loading">地图加载中...</div>
       <div v-if="errorMsg" class="map-error">{{ errorMsg }}</div>
 
       <template v-if="!loading && !errorMsg">
-        <div class="map-toolbar">
+        <div class="map-toolbar void-dash-float">
           <el-select v-model="searchCity" data-ghost-target="map-city-select" class="city-select" placeholder="搜索区域" @change="handleCityChange">
             <el-option
               v-for="item in CITY_OPTIONS"
@@ -32,7 +32,7 @@
           />
         </div>
 
-        <aside class="address-panel">
+        <aside class="address-panel void-dash-float">
           <div class="panel-header">
             <span>地址列表</span>
             <el-button text size="small" data-ghost-target="map-refresh-btn" :loading="listLoading" @click="fetchAddressList">刷新</el-button>
@@ -56,7 +56,7 @@
           </ul>
         </aside>
 
-        <div v-if="pendingVisible" class="pending-panel" :class="{ expanded: pendingExpanded }">
+        <div v-if="pendingVisible" class="pending-panel void-dash-float" :class="{ expanded: pendingExpanded }">
           <div class="pending-header" data-ghost-target="map-pending-header" @click="pendingExpanded = !pendingExpanded">
             <span class="pending-title">{{ markerData.address || '待保存地址' }}</span>
             <span class="pending-toggle">{{ pendingExpanded ? '▲' : '▼' }}</span>
@@ -442,6 +442,7 @@ onMounted(async () => {
       center: defaultCenter,
       viewMode: '2D',
       resizeEnable: true,
+      mapStyle: 'amap://styles/dark',
     })
 
     geocoder = new AMap.Geocoder({ city: searchCity.value })
@@ -498,7 +499,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .map-page {
   position: relative;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 108px);
   margin: -24px;
 }
 
@@ -513,14 +514,14 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   font-size: $font-size-lg;
-  color: $text-secondary;
+  color: var(--void-muted);
   pointer-events: none;
   z-index: 5;
 }
 
 .map-error {
-  color: #e74c3c;
-  background: rgba(255, 255, 255, .85);
+  color: #ff8a8a;
+  background: rgba(3, 3, 6, 0.88);
 }
 
 .map-toolbar {
@@ -531,9 +532,6 @@ onUnmounted(() => {
   display: flex;
   gap: 8px;
   padding: 12px;
-  background: #fff;
-  border-radius: $radius;
-  box-shadow: $shadow;
   z-index: 10;
 
   .el-input {
@@ -559,9 +557,6 @@ onUnmounted(() => {
   width: 272px;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-radius: $radius;
-  box-shadow: $shadow;
   z-index: 10;
   overflow: hidden;
 }
@@ -573,13 +568,14 @@ onUnmounted(() => {
   padding: 12px 16px;
   font-weight: 600;
   font-size: 14px;
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid var(--void-border);
+  color: var(--void-text);
 }
 
 .panel-empty {
   padding: 24px 16px;
   text-align: center;
-  color: $text-secondary;
+  color: var(--void-muted);
   font-size: 13px;
 }
 
@@ -595,27 +591,30 @@ onUnmounted(() => {
   padding: 10px 12px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background .15s;
+  transition: background 0.15s;
+  border: 1px solid transparent;
 
   &:hover {
-    background: $bg-gray;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   &.active {
-    background: rgba(64, 158, 255, .1);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--void-border);
   }
 }
 
 .address-text {
   font-size: 13px;
-  color: $text;
+  color: var(--void-text);
   line-height: 1.4;
   margin-bottom: 4px;
 }
 
 .address-coord {
   font-size: 11px;
-  color: $text-secondary;
+  font-family: var(--void-mono);
+  color: var(--void-muted);
   margin-bottom: 4px;
 }
 
@@ -630,9 +629,6 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   width: min(420px, calc(100% - 320px));
-  background: #fff;
-  border-radius: $radius;
-  box-shadow: $shadow-md;
   z-index: 10;
   overflow: hidden;
 }
@@ -646,14 +642,14 @@ onUnmounted(() => {
   user-select: none;
 
   &:hover {
-    background: $bg-gray;
+    background: rgba(255, 255, 255, 0.04);
   }
 }
 
 .pending-title {
   flex: 1;
   font-size: 13px;
-  color: $text;
+  color: var(--void-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -661,7 +657,7 @@ onUnmounted(() => {
 }
 
 .pending-toggle {
-  color: $text-secondary;
+  color: var(--void-muted);
 }
 
 .pending-body {
@@ -684,14 +680,18 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   padding: 10px 24px;
-  background: rgba(0, 0, 0, .7);
-  color: #fff;
-  font-size: 13px;
-  border-radius: 20px;
+  background: rgba(8, 8, 12, 0.88);
+  border: 1px solid var(--void-border);
+  color: var(--void-text);
+  font-family: var(--void-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  border-radius: 100px;
   pointer-events: none;
   z-index: 10;
   max-width: calc(100% - 320px);
   text-align: center;
+  backdrop-filter: blur(12px);
 }
 
 .info-row {
@@ -702,15 +702,15 @@ onUnmounted(() => {
   .info-label {
     width: 48px;
     flex-shrink: 0;
-    color: $text-secondary;
+    color: var(--void-muted);
     font-size: $font-size-sm;
   }
 
   .info-value {
     flex: 1;
-    color: $text;
+    font-family: var(--void-mono);
     font-size: $font-size-sm;
-    word-break: break-all;
+    color: var(--void-text);
   }
 }
 </style>

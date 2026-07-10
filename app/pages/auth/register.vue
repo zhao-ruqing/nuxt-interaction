@@ -1,62 +1,95 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-card">
-      <h2>注册</h2>
-      <p class="auth-subtitle">创建一个新账号开始使用</p>
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        @submit.prevent="handleRegister"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="form.username"
-            placeholder="用户名（3-50个字符）"
-            size="large"
-          />
-        </el-form-item>
-        <el-form-item prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="密码（至少6位）"
-            size="large"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item prop="confirmPassword">
-          <el-input
-            v-model="form.confirmPassword"
-            type="password"
-            placeholder="确认密码"
-            size="large"
-            show-password
-          />
-        </el-form-item>
-        <button>
-          <span class="shadow"></span>
-          <span class="edge"></span>
-          <span class="front text"> 注册 </span>
-        </button>
-      </el-form>
-      <p class="auth-switch">
-        已有账号？<NuxtLink to="/auth/login">立即登录</NuxtLink>
-      </p>
-    </div>
-  </div>
+  <VoidShell>
+    <header class="void-nav void-nav--static">
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>VOID</NuxtLink>
+      <nav class="void-nav__links">
+        <NuxtLink to="/" class="void-nav__link" data-magnetic>首页</NuxtLink>
+        <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic>登录</NuxtLink>
+      </nav>
+    </header>
+
+    <main class="void-page void-page--center">
+      <div class="void-card" ref="cardRef">
+        <div class="void-card__badge">
+          <span class="void-card__pulse" />
+          AUTH GATE
+        </div>
+        <h1 class="void-card__title">注册</h1>
+        <p class="void-card__subtitle">创建一个新账号开始使用</p>
+
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          @submit.prevent="handleRegister"
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="form.username"
+              placeholder="用户名（3-50个字符）"
+              size="large"
+            />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="密码（至少6位）"
+              size="large"
+              show-password
+            />
+          </el-form-item>
+          <el-form-item prop="confirmPassword">
+            <el-input
+              v-model="form.confirmPassword"
+              type="password"
+              placeholder="确认密码"
+              size="large"
+              show-password
+            />
+          </el-form-item>
+          <button
+            type="submit"
+            class="void-btn void-btn--primary"
+            data-magnetic
+            :disabled="loading"
+          >
+            <span class="void-btn__glow" />
+            {{ loading ? "注册中..." : "注册" }}
+          </button>
+        </el-form>
+
+        <p class="void-card__switch">
+          已有账号？<NuxtLink to="/auth/login">立即登录</NuxtLink>
+        </p>
+      </div>
+    </main>
+  </VoidShell>
 </template>
 
 <script setup lang="ts">
 import type { FormInstance, FormRules } from "element-plus";
+import { gsap } from "gsap";
 
-definePageMeta({ layout: "default" });
+definePageMeta({ layout: false });
+
+useHead({
+  title: "注册 — VOID",
+  link: [
+    {
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
+    },
+  ],
+});
 
 const form = reactive({ username: "", password: "", confirmPassword: "" });
 const loading = ref(false);
 const formRef = ref<FormInstance>();
+const cardRef = ref<HTMLElement>();
 
-const validateConfirm = (_rule: any, value: string, callback: Function) => {
+/** 校验两次密码是否一致 */
+const validateConfirm = (_rule: unknown, value: string, callback: (err?: Error) => void) => {
   if (value !== form.password) {
     callback(new Error("两次输入的密码不一致"));
   } else {
@@ -84,6 +117,7 @@ const rules: FormRules = {
   ],
 };
 
+/** 提交注册表单 */
 async function handleRegister() {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return;
@@ -107,132 +141,17 @@ async function handleRegister() {
     loading.value = false;
   }
 }
+
+/** 卡片入场动画 */
+function playEnterAnimation() {
+  const card = cardRef.value;
+  if (!card) return;
+  gsap.fromTo(card, { y: 48, opacity: 0, scale: 0.96 }, {
+    y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "power3.out",
+  });
+}
+
+onMounted(() => {
+  nextTick(playEnterAnimation);
+});
 </script>
-
-<style scoped lang="scss">
-.auth-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 64px - 73px);
-  padding: 40px 24px;
-}
-
-.auth-card {
-  width: 400px;
-  padding: 40px;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: $shadow-lg;
-
-  h2 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-}
-
-.auth-subtitle {
-  color: $text-secondary;
-  font-size: 14px;
-  margin-bottom: 32px;
-}
-
-.submit-btn {
-  width: 100%;
-}
-
-.auth-switch {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 14px;
-  color: $text-secondary;
-
-  a {
-    color: $primary;
-    font-weight: 500;
-  }
-}
-button {
-  position: relative;
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  outline-offset: 4px;
-  width: 100%;
-  transition: filter 250ms;
-  user-select: none;
-  touch-action: manipulation;
-}
-
-.shadow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  background: hsl(0deg 0% 0% / 0.25);
-  will-change: transform;
-  transform: translateY(2px);
-  transition: transform 600ms cubic-bezier(0.3, 0.7, 0.4, 1);
-}
-
-.edge {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  background: linear-gradient(
-    to left,
-    hsl(340deg 100% 16%) 0%,
-    hsl(340deg 100% 32%) 8%,
-    hsl(340deg 100% 32%) 92%,
-    hsl(340deg 100% 16%) 100%
-  );
-}
-
-.front {
-  display: block;
-  position: relative;
-  padding: 12px 27px;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  color: white;
-  background: hsl(345deg 100% 47%);
-  will-change: transform;
-  transform: translateY(-4px);
-  transition: transform 600ms cubic-bezier(0.3, 0.7, 0.4, 1);
-}
-
-button:hover {
-  filter: brightness(110%);
-}
-
-button:hover .front {
-  transform: translateY(-6px);
-  transition: transform 250ms cubic-bezier(0.3, 0.7, 0.4, 1.5);
-}
-
-button:active .front {
-  transform: translateY(-2px);
-  transition: transform 34ms;
-}
-
-button:hover .shadow {
-  transform: translateY(4px);
-  transition: transform 250ms cubic-bezier(0.3, 0.7, 0.4, 1.5);
-}
-
-button:active .shadow {
-  transform: translateY(1px);
-  transition: transform 34ms;
-}
-
-button:focus:not(:focus-visible) {
-  outline: none;
-}
-</style>

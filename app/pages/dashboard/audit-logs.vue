@@ -1,14 +1,14 @@
 <template>
-  <div class="audit-logs">
-    <div class="page-header">
+  <div class="void-dash-page">
+    <div class="void-dash-header">
       <div>
         <h2>操作日志</h2>
-        <p class="page-desc">记录商品、地图点位等管理操作，便于追溯与审计</p>
+        <p class="void-dash-desc">记录商品、地图点位等管理操作，便于追溯与审计</p>
       </div>
     </div>
 
-    <div class="filter-card">
-      <div class="filter-left">
+    <div class="void-dash-filter">
+      <div class="void-dash-filter__left">
         <el-select
           v-model="filterResourceType"
           placeholder="全部模块"
@@ -63,12 +63,12 @@
           查询
         </el-button>
       </div>
-      <span class="filter-total">
+      <span class="void-dash-filter__total">
         共 <b>{{ total }}</b> 条记录
       </span>
     </div>
 
-    <div class="table-wrapper">
+    <div class="void-dash-table-wrap">
       <el-table
         v-loading="loading"
         :data="logs"
@@ -113,7 +113,7 @@
       </el-table>
     </div>
 
-    <div class="pagination-bar">
+    <div class="void-dash-pagination">
       <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"
@@ -265,101 +265,23 @@ onMounted(fetchLogs);
 </script>
 
 <style scoped lang="scss">
-.audit-logs {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-
-  h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-}
-
-.page-desc {
-  font-size: 13px;
-  color: $text-secondary;
-}
-
-.filter-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid $border;
-}
-
-.filter-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-total {
-  font-size: 13px;
-  color: $text-secondary;
-  white-space: nowrap;
-
-  b {
-    color: $text;
-    font-weight: 600;
-  }
-}
-
-.table-wrapper {
-  flex: 1;
-  min-height: 0;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid $border;
-  overflow: hidden;
-}
-
 .audit-table {
   width: 100%;
-
-  :deep(.el-table__header th) {
-    background: #fafafa;
-    font-weight: 600;
-    color: $text;
-  }
-}
-
-.pagination-bar {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 12px;
 }
 
 .detail-json {
   margin: 0;
   padding: 16px;
-  background: $bg-gray;
-  border-radius: 8px;
-  border: 1px solid $border;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius-sm);
+  font-family: var(--void-mono);
   font-size: 12px;
   line-height: 1.6;
   max-height: 480px;
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  color: var(--void-text);
 }
 </style>

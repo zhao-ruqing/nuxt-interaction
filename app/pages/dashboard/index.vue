@@ -1,51 +1,46 @@
 <template>
-  <div class="dashboard-page">
-    <!-- 左栏：概览信息 -->
+  <div class="void-dash-page dashboard-home">
     <div class="overview-column">
-      <h2>欢迎回来，{{ userStore.user?.username }}</h2>
-      <p class="welcome-text">这是你的项目控制台，一切从这里开始。</p>
-      <div class="info-cards">
-        <div class="info-card">
-          <div class="card-label">用户名</div>
-          <div class="card-value">{{ userStore.user?.username }}</div>
+      <div class="void-dash-header">
+        <div>
+          <h2>欢迎回来，{{ userStore.user?.username }}</h2>
+          <p class="void-dash-desc">这是你的项目控制台，一切从这里开始。</p>
         </div>
-        <div class="info-card">
-          <div class="card-label">注册时间</div>
-          <div class="card-value">
-            {{ formatDate(userStore.user?.created_at) }}
-          </div>
+      </div>
+      <div class="void-dash-stat-grid">
+        <div class="void-dash-stat">
+          <div class="void-dash-stat__label">用户名</div>
+          <div class="void-dash-stat__value">{{ userStore.user?.username }}</div>
         </div>
-        <div class="info-card">
-          <div class="card-label">项目数</div>
-          <div class="card-value">1</div>
+        <div class="void-dash-stat">
+          <div class="void-dash-stat__label">注册时间</div>
+          <div class="void-dash-stat__value">{{ formatDate(userStore.user?.created_at) }}</div>
+        </div>
+        <div class="void-dash-stat">
+          <div class="void-dash-stat__label">项目数</div>
+          <div class="void-dash-stat__value">1</div>
         </div>
       </div>
     </div>
 
-    <!-- 右栏：AI 对话 -->
     <div class="chat-column">
-      <div class="chat-panel">
+      <div class="void-dash-panel chat-panel">
         <div class="chat-header">
           <span class="chat-title">AI 助手</span>
-          <el-button text size="small" @click="clearMessages"
-            >清空对话</el-button
-          >
+          <el-button text size="small" @click="clearMessages">清空对话</el-button>
         </div>
 
         <div ref="chatBodyRef" class="chat-body">
           <div v-if="messages.length === 0" class="chat-empty">
-            <div class="chat-empty-icon">🤖</div>
-            <div class="chat-empty-text">
-              我是你的 AI 助手，有什么可以帮你的？
-            </div>
+            <div class="chat-empty-icon">◇</div>
+            <div class="chat-empty-text">我是你的 AI 助手，有什么可以帮你的？</div>
             <div class="chat-suggestions">
               <span
                 v-for="tip in quickTips"
                 :key="tip"
                 class="chat-suggestion-item"
                 @click="sendMessage(tip)"
-                >{{ tip }}</span
-              >
+              >{{ tip }}</span>
             </div>
           </div>
           <div
@@ -55,12 +50,10 @@
             :class="msg.role"
           >
             <div class="chat-bubble">
-              <!-- 思考过程折叠 -->
               <details v-if="msg.thinking" class="thinking-block">
                 <summary>思考过程</summary>
                 <p>{{ msg.thinking }}</p>
               </details>
-              <!-- 消息内容 -->
               <div v-if="msg.loading && !msg.content" class="typing-dots">
                 <span /><span /><span />
               </div>
@@ -84,9 +77,7 @@
             :disabled="!inputText.trim() || isStreaming"
             :loading="isStreaming"
             @click="handleSend"
-          >
-            发送
-          </el-button>
+          >发送</el-button>
         </div>
       </div>
     </div>
@@ -98,6 +89,7 @@ definePageMeta({
   layout: "dashboard",
   middleware: "auth",
 });
+
 const userStore = useUserStore();
 const { messages, isStreaming, sendMessage, clearMessages } = useAiChat();
 
@@ -110,6 +102,7 @@ const quickTips = [
   "在地图上搜索北京天安门",
 ];
 
+/** 格式化注册日期 */
 function formatDate(dateStr?: string) {
   if (!dateStr) return "-";
   return new Date(dateStr).toLocaleDateString("zh-CN", {
@@ -119,6 +112,7 @@ function formatDate(dateStr?: string) {
   });
 }
 
+/** 发送聊天消息 */
 function handleSend() {
   const text = inputText.value.trim();
   if (!text || isStreaming.value) return;
@@ -126,7 +120,6 @@ function handleSend() {
   inputText.value = "";
 }
 
-// 自动滚动到最新消息
 watch(
   () => messages.value.length,
   () => {
@@ -138,7 +131,6 @@ watch(
   },
 );
 
-// 监听消息内容变化（流式更新时也滚动）
 watch(
   () => messages.value.at(-1)?.content,
   () => {
@@ -152,56 +144,16 @@ watch(
 </script>
 
 <style scoped lang="scss">
-.dashboard-page {
+.dashboard-home {
   display: flex;
   gap: 24px;
-  height: 100%;
-  overflow: hidden;
 }
 
-// ---- 左栏 ----
 .overview-column {
   flex: 1;
   min-width: 0;
-
-  h2 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
 }
 
-.welcome-text {
-  color: $text-secondary;
-  margin-bottom: 32px;
-}
-
-.info-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.info-card {
-  background: #fff;
-  border-radius: $radius;
-  padding: 24px;
-  box-shadow: $shadow;
-
-  .card-label {
-    font-size: 13px;
-    color: $text-secondary;
-    margin-bottom: 8px;
-  }
-
-  .card-value {
-    font-size: 20px;
-    font-weight: 600;
-    color: $text;
-  }
-}
-
-// ---- 右栏：AI 聊天面板 ----
 .chat-column {
   width: 420px;
   flex-shrink: 0;
@@ -211,10 +163,6 @@ watch(
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
-  border-radius: $radius;
-  box-shadow: $shadow;
-  overflow: hidden;
 }
 
 .chat-header {
@@ -222,13 +170,14 @@ watch(
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid var(--void-border);
   flex-shrink: 0;
 }
 
 .chat-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .chat-body {
@@ -246,13 +195,14 @@ watch(
 }
 
 .chat-empty-icon {
-  font-size: 48px;
+  font-size: 36px;
   margin-bottom: 16px;
+  color: var(--void-muted);
 }
 
 .chat-empty-text {
   font-size: 14px;
-  color: $text-secondary;
+  color: var(--void-muted);
   margin-bottom: 20px;
 }
 
@@ -264,20 +214,21 @@ watch(
 }
 
 .chat-suggestion-item {
-  font-size: 13px;
-  color: var(--el-color-primary);
-  background: rgba(64, 158, 255, 0.08);
+  font-size: 12px;
+  color: var(--void-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--void-border);
   padding: 6px 14px;
-  border-radius: 16px;
+  border-radius: 100px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.2s, border-color 0.2s;
 
   &:hover {
-    background: rgba(64, 158, 255, 0.16);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--void-border-hover);
   }
 }
 
-// ---- 消息气泡 ----
 .chat-message {
   margin-bottom: 16px;
 
@@ -286,8 +237,8 @@ watch(
     justify-content: flex-end;
 
     .chat-bubble {
-      background: var(--el-color-primary);
-      color: #fff;
+      background: #fff;
+      color: #000;
       border-radius: 16px 16px 4px 16px;
     }
   }
@@ -297,8 +248,9 @@ watch(
     justify-content: flex-start;
 
     .chat-bubble {
-      background: $bg-gray;
-      color: $text;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--void-text);
+      border: 1px solid var(--void-border);
       border-radius: 16px 16px 16px 4px;
     }
   }
@@ -320,19 +272,18 @@ watch(
 
   summary {
     cursor: pointer;
-    color: $text-secondary;
+    color: var(--void-muted);
   }
 
   p {
     margin-top: 6px;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.04);
+    background: rgba(255, 255, 255, 0.04);
     border-radius: 6px;
     font-size: 12px;
   }
 }
 
-// ---- 打字动画 ----
 .typing-dots {
   display: flex;
   gap: 4px;
@@ -342,39 +293,26 @@ watch(
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: $text-secondary;
+    background: var(--void-muted);
     animation: dot-bounce 1.4s infinite ease-in-out both;
 
-    &:nth-child(1) {
-      animation-delay: 0s;
-    }
-    &:nth-child(2) {
-      animation-delay: 0.16s;
-    }
-    &:nth-child(3) {
-      animation-delay: 0.32s;
-    }
+    &:nth-child(1) { animation-delay: 0s; }
+    &:nth-child(2) { animation-delay: 0.16s; }
+    &:nth-child(3) { animation-delay: 0.32s; }
   }
 }
 
 @keyframes dot-bounce {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
 }
 
-// ---- 底部输入 ----
 .chat-footer {
   display: flex;
   align-items: flex-end;
   gap: 10px;
   padding: 12px 20px;
-  border-top: 1px solid $border;
+  border-top: 1px solid var(--void-border);
   flex-shrink: 0;
 
   :deep(.el-textarea__inner) {

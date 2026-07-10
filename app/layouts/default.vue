@@ -23,14 +23,14 @@
 </template>
 
 <script setup lang="ts">
-const isScrolled = ref(false)
+const isScrolled = ref(false);
 
 function onScroll() {
-  isScrolled.value = window.scrollY > 60
+  isScrolled.value = window.scrollY > 60;
 }
 
-onMounted(() => window.addEventListener('scroll', onScroll))
-onUnmounted(() => window.removeEventListener('scroll', onScroll))
+onMounted(() => window.addEventListener("scroll", onScroll));
+onUnmounted(() => window.removeEventListener("scroll", onScroll));
 </script>
 
 <style scoped lang="scss">
@@ -41,12 +41,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   right: 0;
   z-index: 100;
   padding: 0 24px;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 
   &.scrolled {
-    background: rgba(255, 255, 255, .85);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 }
 
@@ -63,7 +63,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   font-size: 20px;
   font-weight: 700;
   color: $primary;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .nav-links {
@@ -83,7 +83,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   color: #fff !important;
   padding: 8px 20px;
   border-radius: 8px;
-  transition: background .2s;
+  transition: background 0.2s;
 
   &:hover {
     background: $primary-dark !important;

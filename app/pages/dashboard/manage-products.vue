@@ -1,10 +1,9 @@
 <template>
-  <div class="manage-products">
-    <!-- 顶部：标题 + 操作栏 -->
-    <div class="page-header">
+  <div class="void-dash-page">
+    <div class="void-dash-header">
       <div>
         <h2>商品管理</h2>
-        <p class="page-desc">管理饮品商城的商品信息、规格与库存</p>
+        <p class="void-dash-desc">管理饮品商城的商品信息、规格与库存</p>
       </div>
       <el-button
         type="primary"
@@ -16,9 +15,8 @@
       </el-button>
     </div>
 
-    <!-- 筛选卡片 -->
-    <div class="filter-card">
-      <div class="filter-left">
+    <div class="void-dash-filter">
+      <div class="void-dash-filter__left">
         <el-select
           v-model="filterCategory"
           data-ghost-target="search-category"
@@ -52,13 +50,10 @@
           >查询</el-button
         >
       </div>
-      <span class="filter-total"
-        >共 <b>{{ total }}</b> 件商品</span
-      >
+      <span class="void-dash-filter__total">共 <b>{{ total }}</b> 件商品</span>
     </div>
 
-    <!-- 表格区域：内部滚动 -->
-    <div class="table-wrapper">
+    <div class="void-dash-table-wrap">
       <el-table
         v-loading="loading"
         :data="products"
@@ -583,90 +578,8 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-// 页面容器：撑满父级高度，内部 flex 布局，禁止溢出
-.manage-products {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  overflow: hidden;
-}
-
-// ---- 顶部标题栏 ----
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-
-  h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-}
-
-.page-desc {
-  font-size: 13px;
-  color: $text-secondary;
-}
-
-// ---- 筛选卡片 ----
-.filter-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid $border;
-}
-
-.filter-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.filter-total {
-  font-size: 13px;
-  color: $text-secondary;
-  white-space: nowrap;
-
-  b {
-    color: $text;
-    font-weight: 600;
-  }
-}
-
-// ---- 表格区域：内部滚动 ----
-.table-wrapper {
-  flex: 1;
-  min-height: 0;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border: 1px solid $border;
-  overflow: hidden;
-}
-
 .product-table {
   width: 100%;
-
-  // 去掉 el-table 自带的 border/bg，由外层卡片提供
-  :deep(.el-table__inner-wrapper) {
-    // 表头微调
-    .el-table__header th {
-      background: #fafafa;
-      font-weight: 600;
-      color: $text;
-    }
-  }
 }
 
 .product-emoji {
@@ -678,17 +591,15 @@ onMounted(async () => {
   margin-bottom: 4px;
 }
 
-// ---- 弹窗 ----
 .product-dialog {
   :deep(.el-dialog) {
-    border-radius: $radius-lg;
+    border-radius: var(--void-radius);
     overflow: hidden;
   }
 
   :deep(.el-dialog__header) {
     padding: 0;
     margin: 0;
-    padding-bottom: 0px;
   }
 
   :deep(.el-dialog__body) {
@@ -698,20 +609,12 @@ onMounted(async () => {
 
   :deep(.el-dialog__footer) {
     padding: 14px 20px 18px;
-    border-top: 1px solid $border;
-    background: $bg-gray;
+    border-top: 1px solid var(--void-border);
+    background: rgba(255, 255, 255, 0.02);
   }
 
   :deep(.el-form-item) {
     margin-bottom: 12px;
-  }
-
-  :deep(.el-form-item__label) {
-    font-size: 13px;
-    font-weight: 500;
-    color: $text;
-    line-height: 1.4;
-    padding-bottom: 6px;
   }
 }
 
@@ -720,12 +623,8 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding: 10px 20px;
-  background: linear-gradient(
-    135deg,
-    rgba($primary, 0.08) 0%,
-    rgba($primary, 0.02) 100%
-  );
-  border-bottom: 1px solid $border;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--void-border);
 }
 
 .dialog-header-icon {
@@ -736,10 +635,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  background: #fff;
-  border-radius: $radius-sm;
-  box-shadow: $shadow;
-  border: 1px solid $border;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--void-radius-sm);
+  border: 1px solid var(--void-border);
 }
 
 .dialog-header-text {
@@ -749,13 +647,13 @@ onMounted(async () => {
   h3 {
     font-size: 17px;
     font-weight: 700;
-    color: $text;
+    color: var(--void-text);
     margin: 0 0 2px;
   }
 
   p {
     font-size: 12px;
-    color: $text-secondary;
+    color: var(--void-muted);
     margin: 0;
   }
 }
@@ -768,22 +666,20 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: var(--void-radius-sm);
   background: transparent;
-  color: $text-secondary;
+  color: var(--void-muted);
   cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s;
+  transition: background 0.15s, color 0.15s;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.06);
-    color: $text;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--void-text);
   }
 }
 
 .product-form {
-  padding: 0px 0 8px;
+  padding: 0 0 8px;
 }
 
 .form-columns {
@@ -796,9 +692,9 @@ onMounted(async () => {
 .form-card {
   display: flex;
   flex-direction: column;
-  background: $bg-gray;
-  border: 1px solid $border;
-  border-radius: $radius;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius-sm);
   overflow: hidden;
   min-height: 0;
 }
@@ -808,8 +704,8 @@ onMounted(async () => {
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  border-bottom: 1px solid $border;
-  background: #fff;
+  border-bottom: 1px solid var(--void-border);
+  background: rgba(255, 255, 255, 0.03);
   flex-shrink: 0;
 }
 
@@ -828,16 +724,16 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: $radius-sm;
-  background: rgba($primary, 0.1);
-  color: $primary;
+  border-radius: var(--void-radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--void-text);
   font-size: 15px;
 }
 
 .form-card-title {
   font-size: 13px;
   font-weight: 600;
-  color: $text;
+  color: var(--void-text);
   line-height: 1.3;
 }
 
@@ -847,7 +743,50 @@ onMounted(async () => {
 }
 
 .required-mark {
-  color: var(--el-color-danger);
+  color: #ff8a8a;
+  margin-left: 2px;
+}
+
+.spec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 32px;
+  gap: 8px;
+  align-items: center;
+}
+
+.spec-remove-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius-sm);
+  background: transparent;
+  color: var(--void-muted);
+  cursor: pointer;
+
+  &:hover {
+    color: #ff8a8a;
+    border-color: rgba(255, 120, 120, 0.4);
+  }
+}
+
+.add-spec-btn {
+  margin-top: 8px;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .form-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 .inline-fields {
@@ -870,9 +809,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  background: #fff;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius-sm);
 }
 
 .stats-grid {
@@ -902,7 +841,7 @@ onMounted(async () => {
   padding: 0 2px 2px;
   font-size: 12px;
   font-weight: 500;
-  color: $text-muted;
+  color: var(--void-muted);
 }
 
 .spec-table-row {
@@ -911,13 +850,13 @@ onMounted(async () => {
   gap: 8px;
   align-items: center;
   padding: 6px 8px;
-  background: #fff;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius-sm);
   transition: border-color 0.15s;
 
   &:hover {
-    border-color: rgba($primary, 0.35);
+    border-color: var(--void-border-hover);
   }
 
   .el-input-number {
@@ -938,7 +877,7 @@ onMounted(async () => {
 
 .dialog-footer-tip {
   font-size: 12px;
-  color: $text-muted;
+  color: var(--void-muted);
 }
 
 .dialog-footer-actions {

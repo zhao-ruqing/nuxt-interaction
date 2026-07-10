@@ -1,5 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  devServer: {
+    host: "0.0.0.0", // 监听所有网卡，允许局域网其他设备访问
+    port: 3000, // 可选，自定义端口
+  },
   compatibilityDate: "2025-07-15",
   // DevTools 调试面板配置
   devtools: {
@@ -7,7 +11,7 @@ export default defineNuxtConfig({
   },
 
   // 全局样式（仅引入一次）
-  css: ["@/styles/reset.scss", "@/styles/global.scss"],
+  css: ["@/styles/reset.scss", "@/styles/global.scss", "@/styles/void.scss"],
 
   // 配置 Vite 插件
   // 通过 additionalData 注入变量和 mixins，所有组件 SCSS 可直接使用
