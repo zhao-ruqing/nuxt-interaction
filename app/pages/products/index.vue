@@ -43,7 +43,7 @@
         </div>
 
         <div v-else-if="!products.length" class="empty">
-          <span class="empty-icon">🍃</span>
+          <LucideIcon name="leaf" :size="48" class="empty-icon" />
           <p>暂无相关饮品</p>
         </div>
 
@@ -55,7 +55,7 @@
             class="product-card"
           >
             <div class="card-image" :class="`bg-${item.category}`">
-              <span class="emoji">{{ item.image }}</span>
+              <LucideIcon :name="item.image" :size="72" color="#fff" class="product-icon" />
               <div class="tags">
                 <span v-for="tag in item.tags" :key="tag" class="tag">{{ tag }}</span>
               </div>
@@ -70,7 +70,7 @@
                   <span v-if="item.originalPrice" class="original">¥{{ item.originalPrice }}</span>
                 </div>
                 <div class="meta">
-                  <span class="rating">★ {{ item.rating }}</span>
+                  <span class="rating"><LucideIcon name="star" :size="14" class="rating-icon" /> {{ item.rating }}</span>
                   <span class="sales">已售 {{ formatSales(item.sales) }}</span>
                 </div>
               </div>
@@ -275,9 +275,9 @@ onMounted(() => {
 }
 
 .empty-icon {
-  font-size: 48px;
   display: block;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
+  color: $text-muted;
 }
 
 .grid {
@@ -308,9 +308,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 
-  .emoji {
-    font-size: 72px;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  .product-icon {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
   }
 
   &.bg-coffee { background: linear-gradient(135deg, #d4a574 0%, #8b6914 100%); }
@@ -398,7 +397,9 @@ onMounted(() => {
   .rating {
     color: #f39c12;
     font-weight: 500;
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 }
 

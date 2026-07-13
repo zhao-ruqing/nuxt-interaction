@@ -6,7 +6,7 @@
     :title="isOpen ? '关闭页面助手' : '打开页面助手'"
     @click="toggle"
   >
-    <span class="void-float-trigger__icon">◇</span>
+    <LucideIcon name="sparkles" :size="12" class="void-float-trigger__icon" />
     <span class="void-float-trigger__label">页面助手</span>
   </button>
 </template>
@@ -60,7 +60,6 @@ const { isOpen, toggle } = usePageAgentPanel()
   }
 
   &__icon {
-    font-size: 10px;
     line-height: 1;
     color: var(--void-muted);
     transition: color 0.25s;

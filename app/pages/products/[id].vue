@@ -6,7 +6,7 @@
     </div>
 
     <div v-else-if="error" class="error">
-      <span class="error-icon">😕</span>
+      <LucideIcon name="frown" :size="48" class="error-icon" />
       <p>{{ error }}</p>
       <NuxtLink to="/products" class="back-btn">返回商城</NuxtLink>
     </div>
@@ -22,7 +22,7 @@
       <div class="detail-main">
         <!-- 左侧图片 -->
         <div class="detail-image" :class="`bg-${product.category}`">
-          <span class="emoji">{{ product.image }}</span>
+          <LucideIcon :name="product.image" :size="140" color="#fff" class="product-icon" />
         </div>
 
         <!-- 右侧信息 -->
@@ -35,7 +35,7 @@
           <h1>{{ product.name }}</h1>
 
           <div class="rating-row">
-            <span class="rating">★ {{ product.rating }}</span>
+            <span class="rating"><LucideIcon name="star" :size="16" class="rating-icon" /> {{ product.rating }}</span>
             <span class="sales">月销 {{ formatSales(product.sales) }}</span>
             <span class="stock">库存 {{ product.stock }}</span>
           </div>
@@ -280,9 +280,9 @@ onMounted(() => fetchProduct())
 }
 
 .error-icon {
-  font-size: 48px;
   display: block;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
+  color: $text-secondary;
 }
 
 .back-btn {
@@ -327,9 +327,8 @@ onMounted(() => fetchProduct())
   align-items: center;
   justify-content: center;
 
-  .emoji {
-    font-size: 140px;
-    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
+  .product-icon {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
   }
 
   &.bg-coffee { background: linear-gradient(135deg, #d4a574 0%, #8b6914 100%); }
@@ -379,6 +378,9 @@ onMounted(() => fetchProduct())
   .rating {
     color: #f39c12;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 }
 
@@ -561,8 +563,8 @@ onMounted(() => fetchProduct())
   .detail-image {
     height: 280px;
 
-    .emoji {
-      font-size: 100px;
+    .product-icon {
+      transform: scale(0.85);
     }
   }
 

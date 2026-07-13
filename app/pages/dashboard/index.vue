@@ -32,7 +32,7 @@
 
         <div ref="chatBodyRef" class="chat-body">
           <div v-if="messages.length === 0" class="chat-empty">
-            <div class="chat-empty-icon">◇</div>
+            <LucideIcon name="bot" :size="28" class="chat-empty-icon" />
             <div class="chat-empty-text">我是你的 AI 助手，有什么可以帮你的？</div>
             <div class="chat-suggestions">
               <span
@@ -195,7 +195,6 @@ watch(
 }
 
 .chat-empty-icon {
-  font-size: 36px;
   margin-bottom: 16px;
   color: var(--void-muted);
 }

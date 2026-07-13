@@ -15,8 +15,8 @@
       @pointerup="(e) => endDrag(e, 'fab')"
       @pointercancel="(e) => endDrag(e, 'fab')"
     >
-      <span v-if="!isOpen" class="fab-icon">◇</span>
-      <span v-else class="fab-icon">✕</span>
+      <span v-if="!isOpen" class="fab-icon"><LucideIcon name="bot" :size="22" /></span>
+      <span v-else class="fab-icon"><LucideIcon name="x" :size="20" /></span>
     </button>
 
     <!-- 对话面板 -->
@@ -34,7 +34,7 @@
           @pointercancel="(e) => endDrag(e, 'header')"
         >
           <div class="header-info">
-            <span class="header-icon">◇</span>
+            <LucideIcon name="bot" :size="18" class="header-icon" />
             <div>
               <h3>饮品 AI 助手</h3>
               <p>试试说「帮我点一杯咖啡」</p>

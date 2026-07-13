@@ -11,7 +11,7 @@
         data-ghost-target="btn-create"
         @click="openCreate"
       >
-        <el-icon style="margin-right: 4px"><Plus /></el-icon>新增商品
+        <LucideIcon name="plus" :size="16" class="btn-icon" />新增商品
       </el-button>
     </div>
 
@@ -65,7 +65,7 @@
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column label="图标" width="80" align="center">
           <template #default="{ row }">
-            <span class="product-emoji">{{ row.image }}</span>
+            <LucideIcon :name="row.image" :size="28" class="product-icon" />
           </template>
         </el-table-column>
         <el-table-column
@@ -131,7 +131,7 @@
     >
       <template #header>
         <div class="dialog-header">
-          <div class="dialog-header-icon">{{ form.image || "☕" }}</div>
+          <LucideIcon :name="form.image" :size="36" class="dialog-header-icon" />
           <div class="dialog-header-text">
             <h3>{{ editingId ? "编辑商品" : "新增商品" }}</h3>
             <p>
@@ -146,7 +146,7 @@
             aria-label="关闭"
             @click="dialogVisible = false"
           >
-            <el-icon><Close /></el-icon>
+            <LucideIcon name="x" :size="18" />
           </button>
         </div>
       </template>
@@ -157,8 +157,8 @@
           <section class="form-card">
             <div class="form-card-head">
               <span class="form-card-icon"
-                ><el-icon><Goods /></el-icon
-              ></span>
+                ><LucideIcon name="package" :size="18"
+              /></span>
               <div class="form-card-title">基本信息</div>
             </div>
             <div class="form-card-body">
@@ -186,12 +186,14 @@
               </el-form-item>
               <el-form-item label="图标" required>
                 <div class="icon-input-group">
-                  <div class="icon-preview">{{ form.image || "☕" }}</div>
+                  <div class="icon-preview">
+                    <LucideIcon :name="form.image" :size="24" />
+                  </div>
                   <el-input
                     v-model="form.image"
                     data-ghost-target="form-image"
-                    placeholder="emoji，如 ☕ 🥤"
-                    maxlength="20"
+                    placeholder="Lucide 图标名，如 coffee、cup-soda"
+                    maxlength="32"
                   />
                 </div>
               </el-form-item>
@@ -265,8 +267,8 @@
           <section class="form-card">
             <div class="form-card-head">
               <span class="form-card-icon"
-                ><el-icon><CollectionTag /></el-icon
-              ></span>
+                ><LucideIcon name="tags" :size="18"
+              /></span>
               <div class="form-card-title">标签与配料</div>
             </div>
             <div class="form-card-body">
@@ -301,8 +303,8 @@
           <section class="form-card">
             <div class="form-card-head">
               <span class="form-card-icon"
-                ><el-icon><List /></el-icon
-              ></span>
+                ><LucideIcon name="list" :size="18"
+              /></span>
               <div class="form-card-head-main">
                 <div class="form-card-title">规格配置</div>
                 <el-button
@@ -312,7 +314,7 @@
                   data-ghost-target="btn-add-spec"
                   @click="addSpec"
                 >
-                  <el-icon style="margin-right: 4px"><Plus /></el-icon>添加
+                  <LucideIcon name="plus" :size="14" class="btn-icon" />添加
                 </el-button>
               </div>
             </div>
@@ -347,7 +349,7 @@
                     :disabled="form.specs.length <= 1"
                     @click="removeSpec(index)"
                   >
-                    <el-icon><Delete /></el-icon>
+                    <LucideIcon name="trash-2" :size="16" />
                   </el-button>
                 </div>
               </div>
@@ -382,15 +384,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Close,
-  CollectionTag,
-  Delete,
-  Goods,
-  List,
-  Plus,
-  Search,
-} from "@element-plus/icons-vue";
+import { Search } from "@lucide/vue";
+import { DEFAULT_PRODUCT_ICON } from "~/utils/lucideIcons";
 import { useAdminAutomationStore } from '~/stores/adminAutomation'
 import type {
   Category,
@@ -428,7 +423,7 @@ function createEmptyForm(): ProductFormData {
     price: 0,
     originalPrice: undefined,
     description: "",
-    image: "☕",
+    image: DEFAULT_PRODUCT_ICON,
     tags: [],
     rating: 5,
     sales: 0,
@@ -582,8 +577,8 @@ onMounted(async () => {
   width: 100%;
 }
 
-.product-emoji {
-  font-size: 22px;
+.product-icon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 
 .tag-item {
@@ -634,7 +629,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  color: var(--void-text);
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--void-radius-sm);
   border: 1px solid var(--void-border);
@@ -808,10 +803,14 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  color: var(--void-text);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--void-border);
   border-radius: var(--void-radius-sm);
+}
+
+.btn-icon {
+  margin-right: 4px;
 }
 
 .stats-grid {

@@ -5,7 +5,7 @@
         <span class="void-card__pulse" />
         PERSONALITY
       </div>
-      <div class="personality-icon">🧠</div>
+      <LucideIcon name="brain" :size="52" class="personality-icon" />
       <h2 class="void-card__title">16Personalities 人格测试</h2>
       <p class="void-card__subtitle">
         该网站禁止被其他页面通过 iframe 嵌入，无法在当前控制台内直接显示。
@@ -56,8 +56,8 @@ async function copyLink() {
 }
 
 .personality-icon {
-  font-size: 52px;
   margin-bottom: 8px;
+  color: var(--void-text);
 }
 
 .personality-actions {

@@ -1,9 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devServer: {
-    host: "0.0.0.0", // 监听所有网卡，允许局域网其他设备访问
-    port: 3000, // 可选，自定义端口
-  },
   compatibilityDate: "2025-07-15",
   // DevTools 调试面板配置
   devtools: {

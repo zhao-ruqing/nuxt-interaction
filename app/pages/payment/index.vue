@@ -6,7 +6,7 @@
     </div>
 
     <div v-else-if="error" class="error">
-      <span class="error-icon">😕</span>
+      <LucideIcon name="frown" :size="48" class="error-icon" />
       <p>{{ error }}</p>
       <NuxtLink to="/products" class="back-btn">返回商城</NuxtLink>
     </div>
@@ -21,7 +21,7 @@
       </nav>
 
       <div v-if="isAutoOrder" class="auto-banner">
-        <span class="banner-icon">🤖</span>
+        <LucideIcon name="bot" :size="28" class="banner-icon" />
         <div>
           <strong>AI 助手已为您选好商品</strong>
           <p>请核对订单信息并输入支付密码完成下单</p>
@@ -34,7 +34,7 @@
 
           <div class="order-item">
             <div class="item-image" :class="`bg-${product.category}`">
-              <span>{{ product.image }}</span>
+              <LucideIcon :name="product.image" :size="48" color="#fff" />
             </div>
             <div class="item-info">
               <h3>{{ product.name }}</h3>
@@ -70,7 +70,7 @@
               :class="{ active: payMethod === method.key }"
             >
               <input v-model="payMethod" type="radio" :value="method.key" />
-              <span class="method-icon">{{ method.icon }}</span>
+              <LucideIcon :name="method.icon" :size="20" class="method-icon" />
               <span>{{ method.label }}</span>
             </label>
           </div>
@@ -138,9 +138,9 @@ const orderQuantity = computed(() => Math.max(1, Number(route.query.quantity) ||
 const isAutoOrder = computed(() => route.query.from === 'auto')
 
 const payMethods = [
-  { key: 'wechat', label: '微信支付', icon: '💚' },
-  { key: 'alipay', label: '支付宝', icon: '💙' },
-  { key: 'balance', label: '余额支付', icon: '💰' },
+  { key: 'wechat', label: '微信支付', icon: 'message-circle' },
+  { key: 'alipay', label: '支付宝', icon: 'wallet' },
+  { key: 'balance', label: '余额支付', icon: 'coins' },
 ]
 
 const selectedSpecLabel = computed(() => {
@@ -269,9 +269,9 @@ onMounted(async () => {
 }
 
 .error-icon {
-  font-size: 48px;
   display: block;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
+  color: $text-secondary;
 }
 
 .back-btn {
@@ -456,7 +456,8 @@ onMounted(async () => {
   }
 
   .method-icon {
-    font-size: 20px;
+    display: inline-flex;
+    color: $text-secondary;
   }
 }
 
