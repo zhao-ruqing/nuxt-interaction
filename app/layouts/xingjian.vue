@@ -9,9 +9,11 @@
       <nav class="xj-nav__links">
         <NuxtLink to="/cities">城市</NuxtLink>
         <NuxtLink to="/checkins">打卡</NuxtLink>
+        <NuxtLink to="/routes">路线</NuxtLink>
         <NuxtLink to="/activities">活动</NuxtLink>
         <NuxtLink to="/rankings">排行</NuxtLink>
         <NuxtLink to="/mall">积分商城</NuxtLink>
+        <NuxtLink to="/friends">好友</NuxtLink>
         <NuxtLink to="/products">饮品商城</NuxtLink>
       </nav>
       <div class="xj-nav__account">

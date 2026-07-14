@@ -217,6 +217,96 @@ export async function listRoutes(cityId?: number) {
   }))
 }
 
+export async function getRoute(id: number, userId?: number) {
+  const [routeRows] = await pool.query(
+    `SELECT r.*, c.name AS city_name FROM xj_routes r JOIN xj_cities c ON c.id = r.city_id WHERE r.id = ? AND r.status = 'published'`,
+    [id],
+  ) as any
+  const route = routeRows[0]
+  if (!route) return null
+  const params: unknown[] = []
+  const checkedSelect = userId
+    ? ', EXISTS(SELECT 1 FROM xj_checkins ci WHERE ci.user_id = ? AND ci.point_id = p.id) AS checked'
+    : ', 0 AS checked'
+  if (userId) params.push(userId)
+  params.push(id)
+  const [pointRows] = await pool.query(
+    `SELECT p.*, rp.sequence_no ${checkedSelect}
+     FROM xj_route_points rp JOIN xj_points p ON p.id = rp.point_id
+     WHERE rp.route_id = ? ORDER BY rp.sequence_no`,
+    params,
+  ) as any
+  const [completionRows] = userId
+    ? await pool.query('SELECT id, completed_at FROM xj_route_completions WHERE route_id = ? AND user_id = ?', [id, userId]) as any
+    : [[]]
+  const points = pointRows.map((row: any) => ({ ...mapPoint(row), sequenceNo: row.sequence_no, checked: Boolean(row.checked) }))
+  return {
+    id: route.id,
+    cityId: route.city_id,
+    cityName: route.city_name,
+    name: route.name,
+    description: route.description,
+    difficulty: route.difficulty,
+    estimatedMinutes: route.estimated_minutes,
+    pointsReward: route.points_reward,
+    points,
+    checkedCount: points.filter((point: any) => point.checked).length,
+    completed: Boolean(completionRows[0]),
+  }
+}
+
+export async function completeRoute(userId: number, routeId: number) {
+  const connection = await pool.getConnection()
+  try {
+    await connection.beginTransaction()
+    const [routes] = await connection.query("SELECT id, name, points_reward FROM xj_routes WHERE id = ? AND status = 'published' FOR UPDATE", [routeId]) as any
+    const route = routes[0]
+    if (!route) throw createError({ statusCode: 404, message: '路线不存在' })
+    const [existing] = await connection.query('SELECT id FROM xj_route_completions WHERE route_id = ? AND user_id = ?', [routeId, userId]) as any
+    if (existing[0]) throw createError({ statusCode: 409, message: '该路线已经领取过完成奖励' })
+    const [progressRows] = await connection.query(
+      `SELECT COUNT(*) AS total, COUNT(ci.point_id) AS checked
+       FROM xj_route_points rp
+       LEFT JOIN (SELECT DISTINCT point_id FROM xj_checkins WHERE user_id = ?) ci ON ci.point_id = rp.point_id
+       WHERE rp.route_id = ?`,
+      [userId, routeId],
+    ) as any
+    const progress = progressRows[0]
+    if (!progress.total || Number(progress.checked) < Number(progress.total)) {
+      throw createError({ statusCode: 409, message: `路线尚未完成，当前 ${progress.checked}/${progress.total} 个点位` })
+    }
+    const [completionResult] = await connection.query(
+      'INSERT INTO xj_route_completions (route_id, user_id, points_awarded) VALUES (?, ?, ?)',
+      [routeId, userId, route.points_reward],
+    ) as any
+    await connection.query(
+      `INSERT INTO xj_point_accounts (user_id, balance, total_earned) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance), total_earned = total_earned + VALUES(total_earned)`,
+      [userId, route.points_reward, route.points_reward],
+    )
+    const [accounts] = await connection.query('SELECT balance FROM xj_point_accounts WHERE user_id = ?', [userId]) as any
+    await connection.query(
+      `INSERT INTO xj_point_ledger (user_id, change_amount, balance_after, business_type, business_id, description)
+       VALUES (?, ?, ?, 'route_complete', ?, ?)`,
+      [userId, route.points_reward, accounts[0].balance, String(completionResult.insertId), `完成路线「${route.name}」`],
+    )
+    await connection.query(
+      `INSERT IGNORE INTO xj_user_badges (user_id, badge_id, source_type, source_id)
+       SELECT ?, id, 'route_complete', ? FROM xj_badges WHERE code = 'first-route' AND status = 'active'`,
+      [userId, String(routeId)],
+    )
+    await connection.commit()
+    return { routeId, awarded: route.points_reward, balance: accounts[0].balance }
+  }
+  catch (error) {
+    await connection.rollback()
+    throw error
+  }
+  finally {
+    connection.release()
+  }
+}
+
 export async function checkin(userId: number, pointId: number, location?: { longitude?: number, latitude?: number }) {
   const connection = await pool.getConnection()
   try {
@@ -250,6 +340,19 @@ export async function checkin(userId: number, pointId: number, location?: { long
        VALUES (?, ?, ?, 'checkin', ?, ?)`,
       [userId, point.points_reward, accounts[0].balance, `${pointId}:${new Date().toISOString().slice(0, 10)}`, `打卡「${point.name}」`],
     )
+    await connection.query(
+      `INSERT IGNORE INTO xj_user_badges (user_id, badge_id, source_type, source_id)
+       SELECT ?, id, 'checkin', ? FROM xj_badges WHERE code = 'first-step' AND status = 'active'`,
+      [userId, String(pointId)],
+    )
+    await connection.query(
+      `INSERT IGNORE INTO xj_user_badges (user_id, badge_id, source_type, source_id)
+       SELECT ?, b.id, 'checkin_count', CAST(COUNT(ci.id) AS CHAR)
+       FROM xj_badges b JOIN xj_checkins ci ON ci.user_id = ?
+       WHERE b.code = 'ten-checkins' AND b.status = 'active'
+       GROUP BY b.id, b.trigger_value HAVING COUNT(ci.id) >= b.trigger_value`,
+      [userId, userId],
+    )
     await connection.commit()
     return { pointId, pointName: point.name, awarded: point.points_reward, balance: accounts[0].balance }
   }
@@ -264,16 +367,20 @@ export async function checkin(userId: number, pointId: number, location?: { long
 
 export async function getUserProfile(userId: number) {
   await pool.query('INSERT IGNORE INTO xj_point_accounts (user_id) VALUES (?)', [userId])
-  const [[accountRows], [checkinRows], [ledgerRows]] = await Promise.all([
+  const [[accountRows], [checkinRows], [ledgerRows], [badgeRows], [routeRows]] = await Promise.all([
     pool.query('SELECT balance, total_earned, total_spent FROM xj_point_accounts WHERE user_id = ?', [userId]),
     pool.query(`SELECT ci.*, p.name AS point_name, c.name AS city_name FROM xj_checkins ci JOIN xj_points p ON p.id = ci.point_id JOIN xj_cities c ON c.id = p.city_id WHERE ci.user_id = ? ORDER BY ci.created_at DESC LIMIT 20`, [userId]),
     pool.query('SELECT * FROM xj_point_ledger WHERE user_id = ? ORDER BY created_at DESC LIMIT 20', [userId]),
+    pool.query(`SELECT b.id, b.code, b.name, b.description, b.icon, ub.awarded_at FROM xj_user_badges ub JOIN xj_badges b ON b.id = ub.badge_id WHERE ub.user_id = ? ORDER BY ub.awarded_at DESC`, [userId]),
+    pool.query(`SELECT rc.id, rc.completed_at, rc.points_awarded, r.id AS route_id, r.name FROM xj_route_completions rc JOIN xj_routes r ON r.id = rc.route_id WHERE rc.user_id = ? ORDER BY rc.completed_at DESC`, [userId]),
   ]) as any
   const account = accountRows[0] || { balance: 0, total_earned: 0, total_spent: 0 }
   return {
     account: { balance: account.balance, totalEarned: account.total_earned, totalSpent: account.total_spent },
     checkins: checkinRows.map((row: any) => ({ id: row.id, pointId: row.point_id, pointName: row.point_name, cityName: row.city_name, pointsAwarded: row.points_awarded, createdAt: row.created_at })),
     ledger: ledgerRows.map((row: any) => ({ id: row.id, changeAmount: row.change_amount, balanceAfter: row.balance_after, businessType: row.business_type, description: row.description, createdAt: row.created_at })),
+    badges: badgeRows.map((row: any) => ({ id: row.id, code: row.code, name: row.name, description: row.description, icon: row.icon, awardedAt: row.awarded_at })),
+    completedRoutes: routeRows.map((row: any) => ({ id: row.id, routeId: row.route_id, name: row.name, pointsAwarded: row.points_awarded, completedAt: row.completed_at })),
   }
 }
 
@@ -363,7 +470,13 @@ export async function confirmMockPayment(userId: number, paymentId: number) {
   const connection = await pool.getConnection()
   try {
     await connection.beginTransaction()
-    const [payments] = await connection.query('SELECT * FROM xj_payments WHERE id = ? AND user_id = ? FOR UPDATE', [paymentId, userId]) as any
+    const [payments] = await connection.query(
+      `SELECT p.*, r.activity_id, a.points_reward, a.title AS activity_title
+       FROM xj_payments p JOIN xj_activity_registrations r ON r.id = p.registration_id
+       JOIN xj_activities a ON a.id = r.activity_id
+       WHERE p.id = ? AND p.user_id = ? FOR UPDATE`,
+      [paymentId, userId],
+    ) as any
     const payment = payments[0]
     if (!payment) throw createError({ statusCode: 404, message: '支付单不存在' })
     if (payment.status === 'paid') {
@@ -373,6 +486,19 @@ export async function confirmMockPayment(userId: number, paymentId: number) {
     await connection.query("UPDATE xj_payments SET status = 'paid', paid_at = NOW() WHERE id = ?", [paymentId])
     await connection.query("UPDATE xj_activity_registrations SET status = 'confirmed', paid_amount = ? WHERE id = ?", [payment.amount, payment.registration_id])
     await connection.query(`UPDATE xj_activities a JOIN xj_activity_registrations r ON r.activity_id = a.id SET a.registered_count = a.registered_count + 1 WHERE r.id = ?`, [payment.registration_id])
+    if (payment.points_reward > 0) {
+      await connection.query(
+        `INSERT INTO xj_point_accounts (user_id, balance, total_earned) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE balance = balance + VALUES(balance), total_earned = total_earned + VALUES(total_earned)`,
+        [userId, payment.points_reward, payment.points_reward],
+      )
+      const [accounts] = await connection.query('SELECT balance FROM xj_point_accounts WHERE user_id = ?', [userId]) as any
+      await connection.query(
+        `INSERT INTO xj_point_ledger (user_id, change_amount, balance_after, business_type, business_id, description)
+         VALUES (?, ?, ?, 'activity_payment', ?, ?)`,
+        [userId, payment.points_reward, accounts[0].balance, String(payment.registration_id), `报名活动「${payment.activity_title}」`],
+      )
+    }
     await connection.commit()
     return { paymentId, status: 'paid' }
   }
@@ -407,10 +533,11 @@ export async function exchangeMallProduct(userId: number, productId: number, qua
       throw createError({ statusCode: 400, message: '实物商品需要填写完整收货信息' })
     }
     const orderNo = `XJ${Date.now()}${String(userId).padStart(4, '0')}`
+    const orderStatus = product.product_type === 'virtual' ? 'completed' : 'paid'
     const [orderResult] = await connection.query(
-      `INSERT INTO xj_exchange_orders (order_no, user_id, product_id, product_name, quantity, points_amount, receiver_name, receiver_phone, receiver_address)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [orderNo, userId, productId, product.name, quantity, pointsAmount, receiver.name || '', receiver.phone || '', receiver.address || ''],
+      `INSERT INTO xj_exchange_orders (order_no, user_id, product_id, product_name, quantity, points_amount, status, receiver_name, receiver_phone, receiver_address)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [orderNo, userId, productId, product.name, quantity, pointsAmount, orderStatus, receiver.name || '', receiver.phone || '', receiver.address || ''],
     ) as any
     await connection.query('UPDATE xj_mall_products SET stock = stock - ?, exchanged_count = exchanged_count + ? WHERE id = ?', [quantity, quantity, productId])
     await connection.query('UPDATE xj_point_accounts SET balance = balance - ?, total_spent = total_spent + ? WHERE user_id = ?', [pointsAmount, pointsAmount, userId])

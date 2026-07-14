@@ -30,6 +30,31 @@
           :class="{ 'is-active': route.path === '/dashboard/points' }"
         >行鉴点位</NuxtLink>
         <NuxtLink
+          to="/dashboard/activities"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/activities' }"
+        >行鉴活动</NuxtLink>
+        <NuxtLink
+          to="/dashboard/routes"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/routes' }"
+        >行鉴路线</NuxtLink>
+        <NuxtLink
+          to="/dashboard/mall-products"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/mall-products' }"
+        >积分商品</NuxtLink>
+        <NuxtLink
+          to="/dashboard/orders"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/orders' }"
+        >兑换订单</NuxtLink>
+        <NuxtLink
+          to="/dashboard/users"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/users' }"
+        >行鉴用户</NuxtLink>
+        <NuxtLink
           to="/dashboard/manage-products"
           class="void-dash-sidebar__item"
           :class="{ 'is-active': route.path === '/dashboard/manage-products' }"
@@ -71,6 +96,11 @@ const pageTitleMap: Record<string, string> = {
   "/dashboard/map": "地图标注",
   "/dashboard/cities": "行鉴城市管理",
   "/dashboard/points": "行鉴点位管理",
+  "/dashboard/activities": "行鉴活动管理",
+  "/dashboard/routes": "行鉴路线管理",
+  "/dashboard/mall-products": "积分商品管理",
+  "/dashboard/orders": "兑换订单管理",
+  "/dashboard/users": "行鉴用户管理",
   "/dashboard/manage-products": "商品管理",
   "/dashboard/audit-logs": "操作日志",
   "/dashboard/personality": "人格测试",
