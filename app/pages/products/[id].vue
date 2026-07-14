@@ -1,104 +1,129 @@
 <template>
-  <div class="product-detail">
-    <div v-if="pending" class="loading">
-      <span class="loading-spinner" />
-      加载中...
-    </div>
-
-    <div v-else-if="error" class="error">
-      <LucideIcon name="frown" :size="48" class="error-icon" />
-      <p>{{ error }}</p>
-      <NuxtLink to="/products" class="back-btn">返回商城</NuxtLink>
-    </div>
-
-    <template v-else-if="product">
-      <!-- 面包屑 -->
-      <nav class="breadcrumb">
-        <NuxtLink to="/products">饮品商城</NuxtLink>
-        <span class="sep">/</span>
-        <span>{{ product.name }}</span>
+  <VoidShell>
+    <header class="void-nav void-nav--static">
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>VOID</NuxtLink>
+      <nav class="void-nav__links">
+        <NuxtLink to="/products" class="void-nav__link" data-magnetic>商城</NuxtLink>
+        <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic>登录</NuxtLink>
       </nav>
+    </header>
 
-      <div class="detail-main">
-        <!-- 左侧图片 -->
-        <div class="detail-image" :class="`bg-${product.category}`">
-          <LucideIcon :name="product.image" :size="140" color="#fff" class="product-icon" />
-        </div>
+    <main class="void-page detail-page">
+      <div v-if="pending" class="detail-state">
+        <span class="detail-spinner" />
+        加载中...
+      </div>
 
-        <!-- 右侧信息 -->
-        <div class="detail-info">
-          <div class="info-tags">
-            <span class="category-tag">{{ product.categoryName }}</span>
-            <span v-for="tag in product.tags" :key="tag" class="tag">{{ tag }}</span>
+      <div v-else-if="error" class="detail-state">
+        <LucideIcon name="frown" :size="48" class="detail-state__icon" />
+        <p>{{ error }}</p>
+        <NuxtLink to="/products" class="void-btn void-btn--primary detail-state__btn" data-magnetic>
+          <span class="void-btn__glow" />
+          返回商城
+        </NuxtLink>
+      </div>
+
+      <template v-else-if="product">
+        <nav class="detail-crumb">
+          <NuxtLink to="/products">饮品商城</NuxtLink>
+          <span class="detail-crumb__sep">/</span>
+          <span>{{ product.name }}</span>
+        </nav>
+
+        <div class="detail-main" ref="mainRef">
+          <div class="detail-image" :class="`bg-${product.category}`">
+            <LucideIcon :name="product.image" :size="140" color="#fff" class="detail-image__icon" />
           </div>
 
-          <h1>{{ product.name }}</h1>
+          <div class="detail-info">
+            <div class="detail-info__tags">
+              <span class="detail-chip detail-chip--accent">{{ product.categoryName }}</span>
+              <span v-for="tag in product.tags" :key="tag" class="detail-chip">{{ tag }}</span>
+            </div>
 
-          <div class="rating-row">
-            <span class="rating"><LucideIcon name="star" :size="16" class="rating-icon" /> {{ product.rating }}</span>
-            <span class="sales">月销 {{ formatSales(product.sales) }}</span>
-            <span class="stock">库存 {{ product.stock }}</span>
-          </div>
+            <h1 class="detail-info__title">{{ product.name }}</h1>
 
-          <p class="description">{{ product.description }}</p>
+            <div class="detail-info__meta">
+              <span class="detail-info__rating">
+                <LucideIcon name="star" :size="16" /> {{ product.rating }}
+              </span>
+              <span>月销 {{ formatSales(product.sales) }}</span>
+              <span>库存 {{ product.stock }}</span>
+            </div>
 
-          <!-- 规格选择 -->
-          <div class="spec-section">
-            <div class="spec-label">选择规格</div>
-            <div class="spec-list">
+            <p class="detail-info__desc">{{ product.description }}</p>
+
+            <div class="detail-spec">
+              <div class="detail-label">选择规格</div>
+              <div class="detail-spec__list">
+                <button
+                  v-for="(spec, i) in product.specs"
+                  :key="spec.size"
+                  class="detail-spec__btn"
+                  :class="{ 'detail-spec__btn--active': selectedSpec === i }"
+                  :data-ghost-target="`spec-${i}`"
+                  data-magnetic
+                  @click="selectedSpec = i"
+                >
+                  <span class="detail-spec__size">{{ spec.size }}</span>
+                  <span class="detail-spec__price">¥{{ spec.price }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="detail-qty">
+              <div class="detail-label">数量</div>
+              <div class="detail-qty__control">
+                <button data-ghost-target="quantity-minus" :disabled="quantity <= 1" @click="quantity--">−</button>
+                <span data-ghost-target="quantity-value">{{ quantity }}</span>
+                <button data-ghost-target="quantity-plus" :disabled="quantity >= product.stock" @click="quantity++">+</button>
+              </div>
+            </div>
+
+            <div class="detail-actions">
+              <div class="detail-total">
+                <span class="detail-total__label">合计</span>
+                <span class="detail-total__price">¥{{ currentPrice * quantity }}</span>
+              </div>
               <button
-                v-for="(spec, i) in product.specs"
-                :key="spec.size"
-                class="spec-btn"
-                :class="{ active: selectedSpec === i }"
-                :data-ghost-target="`spec-${i}`"
-                @click="selectedSpec = i"
+                class="void-btn void-btn--ghost detail-actions__cart"
+                data-ghost-target="add-cart"
+                data-magnetic
+                @click="addToCart"
               >
-                <span class="spec-size">{{ spec.size }}</span>
-                <span class="spec-price">¥{{ spec.price }}</span>
+                加入购物车
+              </button>
+              <button
+                class="void-btn void-btn--primary detail-actions__buy"
+                data-ghost-target="buy-now"
+                data-magnetic
+                @click="buyNow"
+              >
+                <span class="void-btn__glow" />
+                立即购买
               </button>
             </div>
           </div>
+        </div>
 
-          <!-- 数量 -->
-          <div class="quantity-section">
-            <div class="spec-label">数量</div>
-            <div class="quantity-control">
-              <button data-ghost-target="quantity-minus" :disabled="quantity <= 1" @click="quantity--">−</button>
-              <span data-ghost-target="quantity-value">{{ quantity }}</span>
-              <button data-ghost-target="quantity-plus" :disabled="quantity >= product.stock" @click="quantity++">+</button>
-            </div>
-          </div>
-
-          <!-- 价格与操作 -->
-          <div class="action-row">
-            <div class="total-price">
-              <span class="label">合计</span>
-              <span class="price">¥{{ currentPrice * quantity }}</span>
-            </div>
-            <button class="add-cart-btn" data-ghost-target="add-cart" @click="addToCart">加入购物车</button>
-            <button class="buy-btn" data-ghost-target="buy-now" @click="buyNow">立即购买</button>
+        <div v-if="product.ingredients?.length" class="detail-ingredients" ref="ingredientsRef">
+          <h2>配料表</h2>
+          <div class="detail-ingredients__list">
+            <span v-for="item in product.ingredients" :key="item" class="detail-ingredients__item">{{ item }}</span>
           </div>
         </div>
-      </div>
-
-      <!-- 配料表 -->
-      <div v-if="product.ingredients?.length" class="ingredients-section">
-        <h2>配料表</h2>
-        <div class="ingredient-list">
-          <span v-for="item in product.ingredients" :key="item" class="ingredient">{{ item }}</span>
-        </div>
-      </div>
-    </template>
-  </div>
+      </template>
+    </main>
+  </VoidShell>
 </template>
 
 <script setup lang="ts">
 import type { Product, ProductDetailResponse } from '~/types/product'
 import { findSpecMatch, validateOrderQuantity } from '~/composables/useActionExecutor'
 import { useOrderAutomationStore } from '~/stores/orderAutomation'
+import { gsap } from 'gsap'
 
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: false })
 
 const route = useRoute()
 const orderStore = useOrderAutomationStore()
@@ -111,23 +136,35 @@ const selectedSpec = ref(0)
 const quantity = ref(1)
 const autoOrderRunning = ref(false)
 
+const mainRef = ref<HTMLElement>()
+const ingredientsRef = ref<HTMLElement>()
+
 const currentPrice = computed(() => {
   if (!product.value) return 0
   return product.value.specs[selectedSpec.value]?.price ?? product.value.price
 })
 
 useHead({
-  title: computed(() => product.value ? product.value.name : '商品详情'),
+  title: computed(() => product.value ? `${product.value.name} — VOID` : '商品详情 — VOID'),
+  link: [
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
+    },
+  ],
 })
 
+/** 格式化销量展示 */
 function formatSales(n: number) {
   return n >= 10000 ? `${(n / 10000).toFixed(1)}万` : n.toString()
 }
 
+/** 模拟加入购物车 */
 function addToCart() {
   ElMessage.success(`已将 ${quantity.value} 杯「${product.value?.name}」加入购物车（模拟）`)
 }
 
+/** 跳转支付页立即购买 */
 function buyNow() {
   if (!product.value) return
 
@@ -148,6 +185,7 @@ function buyNow() {
   })
 }
 
+/** 拉取商品详情 */
 async function fetchProduct() {
   pending.value = true
   error.value = ''
@@ -155,6 +193,7 @@ async function fetchProduct() {
     const res = await $fetch<ProductDetailResponse>(`/api/products/${route.params.id}`)
     if (res.success) {
       product.value = res.data
+      nextTick(playEnterAnimation)
     }
   }
   catch (e: any) {
@@ -163,6 +202,17 @@ async function fetchProduct() {
   finally {
     pending.value = false
   }
+}
+
+/** 详情区块入场动画 */
+function playEnterAnimation() {
+  const targets = [mainRef.value, ingredientsRef.value].filter(Boolean)
+  if (!targets.length) return
+  gsap.fromTo(
+    targets,
+    { y: 36, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out' },
+  )
 }
 
 /** AI 自动下单：幽灵手依次点击规格、数量、立即购买 */
@@ -250,66 +300,66 @@ onMounted(() => fetchProduct())
 </script>
 
 <style scoped lang="scss">
-.product-detail {
-  padding: calc($navbar-height + 32px) 24px 80px;
-  max-width: $max-width;
+.detail-page {
+  max-width: 1120px;
   margin: 0 auto;
 }
 
-.loading,
-.error {
+.detail-state {
   text-align: center;
   padding: 120px 0;
-  color: $text-secondary;
+  color: var(--void-muted);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+
+  &__icon {
+    display: block;
+    margin: 0 auto 12px;
+    opacity: 0.5;
+  }
+
+  &__btn {
+    width: auto;
+    margin: 20px auto 0;
+    padding: 12px 28px;
+  }
 }
 
-.loading-spinner {
+.detail-spinner {
   display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 2px solid $border;
-  border-top-color: $primary;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--void-border);
+  border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: detail-spin 0.6s linear infinite;
   vertical-align: middle;
   margin-right: 8px;
 }
 
-@keyframes spin {
+@keyframes detail-spin {
   to { transform: rotate(360deg); }
 }
 
-.error-icon {
-  display: block;
-  margin: 0 auto 12px;
-  color: $text-secondary;
-}
+.detail-crumb {
+  font-family: var(--void-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--void-muted);
+  margin-bottom: 36px;
 
-.back-btn {
-  display: inline-block;
-  margin-top: 16px;
-  padding: 10px 24px;
-  background: $primary;
-  color: #fff;
-  border-radius: 8px;
-  font-size: 14px;
+  a {
+    color: var(--void-muted);
+    transition: color 0.25s;
 
-  &:hover {
-    background: $primary-dark;
-  }
-}
-
-.breadcrumb {
-  font-size: 14px;
-  color: $text-secondary;
-  margin-bottom: 32px;
-
-  a:hover {
-    color: $primary;
+    &:hover {
+      color: var(--void-text);
+    }
   }
 
-  .sep {
-    margin: 0 8px;
+  &__sep {
+    margin: 0 10px;
+    opacity: 0.4;
   }
 }
 
@@ -322,264 +372,264 @@ onMounted(() => fetchProduct())
 
 .detail-image {
   height: 400px;
-  border-radius: $radius-lg;
+  border-radius: var(--void-radius);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid var(--void-border);
 
-  .product-icon {
-    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+  &__icon {
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5));
   }
 
-  &.bg-coffee { background: linear-gradient(135deg, #d4a574 0%, #8b6914 100%); }
-  &.bg-soda { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
-  &.bg-tea { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); }
-  &.bg-juice { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); }
-  &.bg-milk { background: linear-gradient(135deg, #e8b4d0 0%, #c39bd3 100%); }
+  &.bg-coffee { background: linear-gradient(135deg, #5c4033 0%, #2a1810 100%); }
+  &.bg-soda { background: linear-gradient(135deg, #8b1a1a 0%, #3d0a0a 100%); }
+  &.bg-tea { background: linear-gradient(135deg, #1a5c35 0%, #0a2e18 100%); }
+  &.bg-juice { background: linear-gradient(135deg, #8b5a10 0%, #3d2808 100%); }
+  &.bg-milk { background: linear-gradient(135deg, #5c3d5c 0%, #2a1a2a 100%); }
 }
 
-.info-tags {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
+.detail-info {
+  &__tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
 
-.category-tag {
-  background: rgba($primary, 0.1);
-  color: $primary;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: 500;
-}
+  &__title {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    color: var(--void-text);
+  }
 
-.tag {
-  background: $bg-gray;
-  color: $text-secondary;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 4px;
-}
+  &__meta {
+    display: flex;
+    gap: 20px;
+    font-family: var(--void-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--void-muted);
+    margin-bottom: 20px;
+  }
 
-.detail-info h1 {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.rating-row {
-  display: flex;
-  gap: 20px;
-  font-size: 14px;
-  color: $text-secondary;
-  margin-bottom: 20px;
-
-  .rating {
-    color: #f39c12;
-    font-weight: 600;
+  &__rating {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  &__desc {
+    font-size: 15px;
+    color: var(--void-muted);
+    line-height: 1.7;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--void-border);
   }
 }
 
-.description {
-  font-size: 15px;
-  color: $text-secondary;
-  line-height: 1.7;
-  margin-bottom: 28px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid $border;
+.detail-chip {
+  background: var(--void-surface);
+  color: var(--void-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--void-border);
+
+  &--accent {
+    color: var(--void-text);
+    border-color: var(--void-border-hover);
+  }
 }
 
-.spec-label {
-  font-size: 14px;
-  font-weight: 600;
+.detail-label {
+  font-family: var(--void-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--void-muted);
   margin-bottom: 12px;
 }
 
-.spec-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.detail-spec {
   margin-bottom: 24px;
-}
 
-.spec-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 20px;
-  border: 1.5px solid $border;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: #fff;
-
-  &:hover {
-    border-color: $primary-light;
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
-  &.active {
-    border-color: $primary;
-    background: rgba($primary, 0.05);
+  &__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 22px;
+    border: 1px solid var(--void-border);
+    border-radius: var(--void-radius-sm);
+    background: var(--void-surface);
+    transition: border-color 0.25s, background 0.25s;
+    font-family: var(--void-display);
+
+    &:hover {
+      border-color: var(--void-border-hover);
+      background: var(--void-surface-hover);
+    }
+
+    &--active {
+      border-color: rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.08);
+    }
   }
 
-  .spec-size {
+  &__size {
     font-size: 13px;
-    color: $text;
+    color: var(--void-text);
     margin-bottom: 4px;
   }
 
-  .spec-price {
+  &__price {
     font-size: 15px;
-    font-weight: 600;
-    color: #e74c3c;
+    font-weight: 700;
+    color: var(--void-text);
   }
 }
 
-.quantity-control {
-  display: inline-flex;
-  align-items: center;
-  border: 1.5px solid $border;
-  border-radius: 8px;
-  overflow: hidden;
+.detail-qty {
   margin-bottom: 32px;
 
-  button {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-    color: $text;
-    background: $bg-gray;
-    cursor: pointer;
-    transition: background 0.2s;
+  &__control {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--void-border);
+    border-radius: 100px;
+    overflow: hidden;
+    background: var(--void-surface);
 
-    &:hover:not(:disabled) {
-      background: $border;
+    button {
+      width: 42px;
+      height: 42px;
+      font-size: 18px;
+      color: var(--void-text);
+      background: transparent;
+      transition: background 0.2s;
+
+      &:hover:not(:disabled) {
+        background: var(--void-surface-hover);
+      }
+
+      &:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
     }
 
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
+    span {
+      width: 48px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--void-text);
+      font-family: var(--void-mono);
     }
-  }
-
-  span {
-    width: 48px;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 500;
   }
 }
 
-.action-row {
+.detail-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
+
+  &__cart,
+  &__buy {
+    width: auto;
+    padding: 14px 28px;
+  }
 }
 
-.total-price {
-  .label {
-    font-size: 14px;
-    color: $text-secondary;
+.detail-total {
+  margin-right: 8px;
+
+  &__label {
+    font-size: 13px;
+    color: var(--void-muted);
     margin-right: 8px;
   }
 
-  .price {
+  &__price {
     font-size: 28px;
-    font-weight: 700;
-    color: #e74c3c;
+    font-weight: 800;
+    color: var(--void-text);
   }
 }
 
-.add-cart-btn,
-.buy-btn {
-  padding: 14px 32px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-cart-btn {
-  background: #fff;
-  color: $primary;
-  border: 1.5px solid $primary;
-
-  &:hover {
-    background: rgba($primary, 0.05);
-  }
-}
-
-.buy-btn {
-  background: $primary;
-  color: #fff;
-  border: 1.5px solid $primary;
-
-  &:hover {
-    background: $primary-dark;
-    box-shadow: 0 4px 16px rgba($primary, 0.35);
-  }
-}
-
-.ingredients-section {
+.detail-ingredients {
   margin-top: 48px;
-  padding: 32px;
-  background: $bg-gray;
-  border-radius: $radius-lg;
+  padding: 28px 32px;
+  background: var(--void-surface);
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius);
+  backdrop-filter: blur(16px);
 
   h2 {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     margin-bottom: 16px;
+    color: var(--void-muted);
+    font-family: var(--void-mono);
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  &__item {
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--void-muted);
+    border: 1px solid var(--void-border);
+    background: rgba(255, 255, 255, 0.02);
   }
 }
 
-.ingredient-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.ingredient {
-  background: #fff;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  color: $text-secondary;
-  box-shadow: $shadow;
-}
-
-@media (max-width: $breakpoint-md) {
+@media (max-width: 768px) {
   .detail-main {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 28px;
   }
 
   .detail-image {
-    height: 280px;
+    height: 260px;
 
-    .product-icon {
+    &__icon {
       transform: scale(0.85);
     }
   }
 
-  .detail-info h1 {
-    font-size: 24px;
+  .detail-info__title {
+    font-size: 26px;
   }
 
-  .action-row {
+  .detail-actions {
     flex-direction: column;
     align-items: stretch;
-  }
 
-  .add-cart-btn,
-  .buy-btn {
-    text-align: center;
+    &__cart,
+    &__buy {
+      width: 100%;
+      text-align: center;
+    }
   }
 }
 </style>

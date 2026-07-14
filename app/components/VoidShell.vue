@@ -1,22 +1,10 @@
 <!--
-  VOID 沉浸式页面外壳
+  VOID 沉浸式页面外壳（非首页）
   用法：<VoidShell>页面内容</VoidShell>
+  不含自定义光标，使用系统默认鼠标样式
 -->
 <template>
-  <div
-    class="void"
-    :class="{ 'void--mobile': isMobile }"
-    @mousemove="onMouseMove"
-  >
-    <template v-if="!isMobile">
-      <div
-        class="void-cursor__ring"
-        :class="{ 'void-cursor__ring--hover': cursorHover }"
-        :style="cursorRingStyle"
-      />
-      <div class="void-cursor__dot" :style="cursorDotStyle" />
-    </template>
-
+  <div class="void" :class="{ 'void--mobile': isMobile }">
     <div class="void-noise" />
     <div class="void-scanlines" />
     <div class="void-grid" />
@@ -26,14 +14,7 @@
 </template>
 
 <script setup lang="ts">
-const {
-  isMobile,
-  cursorHover,
-  cursorDotStyle,
-  cursorRingStyle,
-  onMouseMove,
-  bindMagnetic,
-} = useVoidPage();
+const { isMobile, bindMagnetic } = useVoidPage();
 
 onMounted(() => {
   nextTick(() => bindMagnetic());

@@ -25,35 +25,15 @@
   color: var(--void-text);
   font-family: var(--void-display);
   overflow-x: hidden;
-  cursor: none;
-
-  &--mobile {
-    cursor: auto;
-  }
 }
 
 body.void-body {
   background: var(--void-bg);
   color: var(--void-text);
   overflow-x: hidden;
-  cursor: none;
-
-  &,
-  * {
-    cursor: none !important;
-  }
 
   h1, h2, h3, h4, h5, h6 {
     color: var(--void-text);
-  }
-}
-
-body.void-body.void-body--mobile {
-  cursor: auto;
-
-  &,
-  * {
-    cursor: auto !important;
   }
 }
 
@@ -283,7 +263,7 @@ body.void-body.void-body--mobile {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.08em;
-  cursor: none;
+  cursor: pointer;
   overflow: hidden;
   transition: box-shadow 0.4s, opacity 0.3s;
 
@@ -324,10 +304,6 @@ body.void-body.void-body--mobile {
   &:hover:not(:disabled) &__glow {
     opacity: 1;
   }
-}
-
-.void--mobile .void-btn {
-  cursor: pointer;
 }
 
 // ===== Element Plus 暗色覆写 =====

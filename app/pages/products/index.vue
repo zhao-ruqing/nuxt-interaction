@@ -1,95 +1,130 @@
 <template>
-  <div class="products-page">
-    <!-- 页头 -->
-    <section class="page-header">
-      <div class="header-inner">
-        <h1>饮品商城</h1>
-        <p>精选咖啡、汽水、茶饮与果汁，为你带来每一口的惬意时光</p>
-      </div>
-    </section>
+  <VoidShell>
+    <header class="void-nav void-nav--static">
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>VOID</NuxtLink>
+      <nav class="void-nav__links">
+        <NuxtLink to="/" class="void-nav__link" data-magnetic>首页</NuxtLink>
+        <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic>登录</NuxtLink>
+      </nav>
+    </header>
 
-    <!-- 筛选栏 -->
-    <section class="filter-bar">
-      <div class="filter-inner">
-        <div class="category-tabs">
+    <main class="void-page shop-page">
+      <!-- 页头 -->
+      <header class="shop-header" ref="headerRef">
+        <div class="shop-header__badge">
+          <span class="void-card__pulse" />
+          MARKET SIGNAL
+        </div>
+        <h1 class="shop-header__title">饮品商城</h1>
+        <p class="shop-header__sub">精选咖啡、汽水、茶饮与果汁，为你带来每一口的惬意时光</p>
+      </header>
+
+      <!-- 筛选栏 -->
+      <section class="shop-filter" ref="filterRef">
+        <div class="shop-filter__tabs">
           <button
             v-for="cat in categories"
             :key="cat.key"
-            class="tab-btn"
-            :class="{ active: activeCategory === cat.key }"
+            class="shop-tab"
+            :class="{ 'shop-tab--active': activeCategory === cat.key }"
+            data-magnetic
             @click="activeCategory = cat.key"
           >
             {{ cat.name }}
           </button>
         </div>
-        <div class="search-box">
+        <div class="shop-search">
           <input
             v-model="keyword"
             type="text"
             placeholder="搜索饮品..."
             @keyup.enter="fetchProducts"
-          />
-          <button class="search-btn" @click="fetchProducts">搜索</button>
+          >
+          <button class="void-btn void-btn--primary shop-search__btn" data-magnetic @click="fetchProducts">
+            <span class="void-btn__glow" />
+            搜索
+          </button>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- 商品列表 -->
-    <section class="product-list">
-      <div class="list-inner">
-        <div v-if="pending" class="loading">
-          <span class="loading-spinner" />
+      <!-- 商品列表：横向拖拽滑动 -->
+      <section class="shop-list" ref="listRef">
+        <div v-if="pending" class="shop-state">
+          <span class="shop-spinner" />
           加载中...
         </div>
 
-        <div v-else-if="!products.length" class="empty">
-          <LucideIcon name="leaf" :size="48" class="empty-icon" />
+        <div v-else-if="!products.length" class="shop-state">
+          <LucideIcon name="leaf" :size="48" class="shop-state__icon" />
           <p>暂无相关饮品</p>
         </div>
 
-        <div v-else class="grid">
-          <NuxtLink
-            v-for="item in products"
-            :key="item.id"
-            :to="`/products/${item.id}`"
-            class="product-card"
+        <template v-else>
+          <p class="shop-hint">按住拖拽浏览 · 共 {{ total }} 款</p>
+          <div
+            ref="trackRef"
+            class="shop-track"
+            :class="{ 'shop-track--dragging': isDragging }"
+            @pointerdown="onPointerDown"
+            @wheel.prevent
           >
-            <div class="card-image" :class="`bg-${item.category}`">
-              <LucideIcon :name="item.image" :size="72" color="#fff" class="product-icon" />
-              <div class="tags">
-                <span v-for="tag in item.tags" :key="tag" class="tag">{{ tag }}</span>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="card-category">{{ item.categoryName }}</div>
-              <h3 class="card-title">{{ item.name }}</h3>
-              <p class="card-desc">{{ item.description }}</p>
-              <div class="card-footer">
-                <div class="price">
-                  <span class="current">¥{{ item.price }}</span>
-                  <span v-if="item.originalPrice" class="original">¥{{ item.originalPrice }}</span>
+            <div class="shop-track__inner">
+              <article
+                v-for="item in products"
+                :key="item.id"
+                class="shop-card"
+                role="link"
+                tabindex="0"
+                :data-product-id="item.id"
+                @keydown.enter="openProduct(item.id)"
+              >
+                <div class="shop-card__image" :class="`bg-${item.category}`">
+                  <LucideIcon :name="item.image" :size="56" color="#fff" class="shop-card__icon" />
+                  <div class="shop-card__tags">
+                    <span v-for="tag in item.tags" :key="tag" class="shop-tag">{{ tag }}</span>
+                  </div>
                 </div>
-                <div class="meta">
-                  <span class="rating"><LucideIcon name="star" :size="14" class="rating-icon" /> {{ item.rating }}</span>
-                  <span class="sales">已售 {{ formatSales(item.sales) }}</span>
+                <div class="shop-card__body">
+                  <div class="shop-card__category">{{ item.categoryName }}</div>
+                  <h3 class="shop-card__title">{{ item.name }}</h3>
+                  <p class="shop-card__desc">{{ item.description }}</p>
+                  <div class="shop-card__footer">
+                    <div class="shop-price">
+                      <span class="shop-price__current">¥{{ item.price }}</span>
+                      <span v-if="item.originalPrice" class="shop-price__original">¥{{ item.originalPrice }}</span>
+                    </div>
+                    <div class="shop-meta">
+                      <span class="shop-meta__rating">
+                        <LucideIcon name="star" :size="14" /> {{ item.rating }}
+                      </span>
+                      <span>已售 {{ formatSales(item.sales) }}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </article>
             </div>
-          </NuxtLink>
-        </div>
-
-        <p v-if="products.length" class="total-hint">共 {{ total }} 款饮品</p>
-      </div>
-    </section>
-  </div>
+          </div>
+        </template>
+      </section>
+    </main>
+  </VoidShell>
 </template>
 
 <script setup lang="ts">
 import type { Category, Product, ProductListResponse } from '~/types/product'
+import { gsap } from 'gsap'
 
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: false })
 
-useHead({ title: '饮品商城' })
+useHead({
+  title: '饮品商城 — VOID',
+  link: [
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
+    },
+  ],
+})
 
 const activeCategory = ref('all')
 const keyword = ref('')
@@ -98,10 +133,94 @@ const categories = ref<Category[]>([])
 const total = ref(0)
 const pending = ref(true)
 
+const headerRef = ref<HTMLElement>()
+const filterRef = ref<HTMLElement>()
+const listRef = ref<HTMLElement>()
+const trackRef = ref<HTMLElement>()
+
+const isDragging = ref(false)
+/** 指针是否按下（尚未确认是否拖拽） */
+let isPointerDown = false
+/** 本次手势是否发生过有效拖动 */
+let hasDragged = false
+let startX = 0
+let startScrollLeft = 0
+let activePointerId: number | null = null
+/** 按下时命中的商品卡片 */
+let pressedCard: HTMLElement | null = null
+
+/** 格式化销量展示 */
 function formatSales(n: number) {
   return n >= 10000 ? `${(n / 10000).toFixed(1)}万` : n.toString()
 }
 
+/** 进入商品详情 */
+function openProduct(id: number | string) {
+  navigateTo(`/products/${id}`)
+}
+
+/** 开始记录指针位置，拖拽阈值前不进入拖拽态 */
+function onPointerDown(e: PointerEvent) {
+  const track = trackRef.value
+  if (!track || e.button !== 0) return
+
+  activePointerId = e.pointerId
+  isPointerDown = true
+  isDragging.value = false
+  hasDragged = false
+  startX = e.clientX
+  startScrollLeft = track.scrollLeft
+  pressedCard = (e.target as HTMLElement | null)?.closest?.('.shop-card') ?? null
+
+  window.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('pointerup', onPointerUp)
+  window.addEventListener('pointercancel', onPointerUp)
+}
+
+/** 超过阈值后进入拖拽并横向滚动 */
+function onPointerMove(e: PointerEvent) {
+  const track = trackRef.value
+  if (!track || !isPointerDown || e.pointerId !== activePointerId) return
+
+  const dx = e.clientX - startX
+  if (!hasDragged && Math.abs(dx) > 8) {
+    hasDragged = true
+    isDragging.value = true
+    pressedCard = null
+    try { track.setPointerCapture(e.pointerId) } catch { /* ignore */ }
+  }
+
+  if (hasDragged) {
+    track.scrollLeft = startScrollLeft - dx
+  }
+}
+
+/** 结束手势：未拖拽则打开商品，已拖拽则忽略点击 */
+function onPointerUp(e: PointerEvent) {
+  if (activePointerId !== null && e.pointerId !== activePointerId) return
+
+  const track = trackRef.value
+  if (track && activePointerId !== null && hasDragged) {
+    try { track.releasePointerCapture(activePointerId) } catch { /* ignore */ }
+  }
+
+  const shouldOpen = !hasDragged && pressedCard
+  const productId = pressedCard?.dataset.productId
+
+  isPointerDown = false
+  isDragging.value = false
+  activePointerId = null
+  pressedCard = null
+  hasDragged = false
+
+  window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('pointerup', onPointerUp)
+  window.removeEventListener('pointercancel', onPointerUp)
+
+  if (shouldOpen && productId) openProduct(productId)
+}
+
+/** 拉取商品列表 */
 async function fetchProducts() {
   pending.value = true
   const params = new URLSearchParams()
@@ -118,6 +237,30 @@ async function fetchProducts() {
     total.value = res.data.total
   }
   pending.value = false
+  await nextTick()
+  if (trackRef.value) trackRef.value.scrollLeft = 0
+}
+
+/** 页面区块入场动画 */
+function playEnterAnimation() {
+  const targets = [headerRef.value, filterRef.value, listRef.value].filter(Boolean)
+  gsap.fromTo(
+    targets,
+    { y: 24, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.7, stagger: 0.1, ease: 'power3.out' },
+  )
+}
+
+/** 锁定页面纵向滚动 */
+function lockPageScroll() {
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+}
+
+/** 恢复页面纵向滚动 */
+function unlockPageScroll() {
+  document.documentElement.style.overflow = ''
+  document.body.style.overflow = ''
 }
 
 watch(activeCategory, () => fetchProducts())
@@ -125,314 +268,391 @@ watch(activeCategory, () => fetchProducts())
 const route = useRoute()
 
 onMounted(() => {
+  lockPageScroll()
   const q = route.query.keyword
   if (typeof q === 'string' && q) keyword.value = q
   fetchProducts()
+  nextTick(playEnterAnimation)
+})
+
+onUnmounted(() => {
+  unlockPageScroll()
+  window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('pointerup', onPointerUp)
+  window.removeEventListener('pointercancel', onPointerUp)
 })
 </script>
 
 <style scoped lang="scss">
-.products-page {
-  padding-top: $navbar-height;
+.shop-page {
+  box-sizing: border-box;
+  height: 100dvh;
+  max-height: 100dvh;
+  max-width: none;
+  margin: 0;
+  padding: 88px 0 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.page-header {
-  background: linear-gradient(135deg, #eef1ff 0%, #f8f9fb 50%, #fff5ee 100%);
-  padding: 60px 24px 48px;
+.shop-header {
+  flex-shrink: 0;
   text-align: center;
+  margin: 0 auto 20px;
+  padding: 0 24px;
+  max-width: 1120px;
+  width: 100%;
 
-  h1 {
-    font-size: 40px;
-    font-weight: 800;
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 12px;
-    letter-spacing: -0.5px;
+    padding: 5px 12px;
+    border: 1px solid var(--void-border);
+    border-radius: 100px;
+    font-family: var(--void-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--void-muted);
   }
 
-  p {
-    font-size: 16px;
-    color: $text-secondary;
+  &__title {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: var(--void-text);
+  }
+
+  &__sub {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--void-muted);
   }
 }
 
-.header-inner {
-  max-width: $max-width;
-  margin: 0 auto;
-}
-
-.filter-bar {
-  position: sticky;
-  top: $navbar-height;
-  z-index: 50;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid $border;
-  padding: 16px 24px;
-}
-
-.filter-inner {
-  max-width: $max-width;
-  margin: 0 auto;
+.shop-filter {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto 20px;
+  padding: 12px 16px;
+  background: var(--void-surface);
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius);
+  backdrop-filter: blur(20px);
+
+  &__tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 }
 
-.category-tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.tab-btn {
-  padding: 8px 18px;
-  border-radius: 20px;
-  font-size: 14px;
-  color: $text-secondary;
-  background: $bg-gray;
-  border: 1.5px solid transparent;
-  transition: all 0.2s;
-  cursor: pointer;
+.shop-tab {
+  padding: 7px 16px;
+  border-radius: 100px;
+  font-family: var(--void-display);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--void-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: color 0.25s, background 0.25s, border-color 0.25s;
 
   &:hover {
-    color: $text;
-    background: #fff;
-    border-color: $border;
+    color: var(--void-text);
+    background: var(--void-surface-hover);
+    border-color: var(--void-border);
   }
 
-  &.active {
-    color: #fff;
-    background: $primary;
-    border-color: $primary;
+  &--active {
+    color: #000;
+    background: #fff;
+    border-color: #fff;
   }
 }
 
-.search-box {
+.shop-search {
   display: flex;
   gap: 8px;
 
   input {
-    width: 200px;
-    padding: 8px 14px;
-    border: 1.5px solid $border;
-    border-radius: 8px;
+    width: 180px;
+    padding: 9px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--void-border);
+    border-radius: 100px;
+    font-family: var(--void-display);
     font-size: 14px;
+    color: var(--void-text);
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.25s, background 0.25s;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.28);
+    }
 
     &:focus {
-      border-color: $primary;
+      border-color: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.06);
     }
   }
-}
 
-.search-btn {
-  padding: 8px 18px;
-  background: $primary;
-  color: #fff;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: $primary-dark;
+  &__btn {
+    width: auto;
+    padding: 9px 20px;
+    white-space: nowrap;
   }
 }
 
-.product-list {
-  padding: 40px 24px 80px;
+.shop-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.list-inner {
-  max-width: $max-width;
-  margin: 0 auto;
+.shop-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--void-muted);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+
+  &__icon {
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
 }
 
-.loading,
-.empty {
-  text-align: center;
-  padding: 80px 0;
-  color: $text-secondary;
-  font-size: 15px;
-}
-
-.loading-spinner {
+.shop-spinner {
   display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 2px solid $border;
-  border-top-color: $primary;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--void-border);
+  border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  vertical-align: middle;
-  margin-right: 8px;
+  animation: shop-spin 0.6s linear infinite;
+  margin-bottom: 10px;
 }
 
-@keyframes spin {
+@keyframes shop-spin {
   to { transform: rotate(360deg); }
 }
 
-.empty-icon {
-  display: block;
+.shop-hint {
+  flex-shrink: 0;
+  width: min(1120px, calc(100% - 48px));
   margin: 0 auto 12px;
-  color: $text-muted;
+  font-family: var(--void-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--void-muted);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+.shop-track {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 0 max(24px, calc((100vw - 1120px) / 2));
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: none;
+  touch-action: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &--dragging {
+    cursor: grabbing;
+
+    .shop-card {
+      pointer-events: none;
+    }
+  }
+
+  &__inner {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    width: max-content;
+    height: 100%;
+    max-height: 420px;
+  }
 }
 
-.product-card {
-  background: #fff;
-  border-radius: $radius-lg;
-  overflow: hidden;
-  box-shadow: $shadow;
-  transition: box-shadow 0.3s, transform 0.3s;
+.shop-card {
   display: flex;
   flex-direction: column;
+  flex: 0 0 280px;
+  width: 280px;
+  height: 100%;
+  max-height: 420px;
+  background: var(--void-surface);
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius);
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  transition: border-color 0.3s, background 0.3s;
+  cursor: pointer;
 
   &:hover {
-    box-shadow: $shadow-lg;
-    transform: translateY(-4px);
+    border-color: var(--void-border-hover);
+    background: var(--void-surface-hover);
+  }
+
+  &__image {
+    position: relative;
+    height: 140px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.bg-coffee { background: linear-gradient(135deg, #5c4033 0%, #2a1810 100%); }
+    &.bg-soda { background: linear-gradient(135deg, #8b1a1a 0%, #3d0a0a 100%); }
+    &.bg-tea { background: linear-gradient(135deg, #1a5c35 0%, #0a2e18 100%); }
+    &.bg-juice { background: linear-gradient(135deg, #8b5a10 0%, #3d2808 100%); }
+    &.bg-milk { background: linear-gradient(135deg, #5c3d5c 0%, #2a1a2a 100%); }
+  }
+
+  &__icon {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  }
+
+  &__tags {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 6px;
+  }
+
+  &__body {
+    padding: 16px 18px 18px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__category {
+    font-family: var(--void-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--void-muted);
+    margin-bottom: 6px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--void-text);
+  }
+
+  &__desc {
+    font-size: 12px;
+    color: var(--void-muted);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+    margin-bottom: 12px;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
   }
 }
 
-.card-image {
-  position: relative;
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  .product-icon {
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  }
-
-  &.bg-coffee { background: linear-gradient(135deg, #d4a574 0%, #8b6914 100%); }
-  &.bg-soda { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
-  &.bg-tea { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); }
-  &.bg-juice { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); }
-  &.bg-milk { background: linear-gradient(135deg, #e8b4d0 0%, #c39bd3 100%); }
-}
-
-.tags {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  gap: 6px;
-}
-
-.tag {
-  background: rgba(255, 255, 255, 0.9);
-  color: $text;
-  font-size: 11px;
+.shop-tag {
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.06em;
   padding: 3px 8px;
   border-radius: 4px;
-  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.card-body {
-  padding: 20px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-category {
-  font-size: 12px;
-  color: $primary;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.card-title {
-  font-size: 17px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.card-desc {
-  font-size: 13px;
-  color: $text-secondary;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  flex: 1;
-  margin-bottom: 16px;
-}
-
-.card-footer {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-.price {
-  .current {
-    font-size: 20px;
+.shop-price {
+  &__current {
+    font-size: 18px;
     font-weight: 700;
-    color: #e74c3c;
+    color: var(--void-text);
   }
 
-  .original {
-    font-size: 13px;
-    color: $text-muted;
+  &__original {
+    font-size: 12px;
+    color: var(--void-muted);
     text-decoration: line-through;
     margin-left: 6px;
   }
 }
 
-.meta {
+.shop-meta {
   text-align: right;
-  font-size: 12px;
-  color: $text-secondary;
+  font-size: 11px;
+  color: var(--void-muted);
+  font-family: var(--void-mono);
+  letter-spacing: 0.04em;
 
-  .rating {
-    color: #f39c12;
-    font-weight: 500;
+  &__rating {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    color: rgba(255, 255, 255, 0.72);
+    margin-bottom: 2px;
   }
 }
 
-.total-hint {
-  text-align: center;
-  margin-top: 40px;
-  font-size: 14px;
-  color: $text-muted;
-}
-
-@media (max-width: $breakpoint-lg) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: $breakpoint-sm) {
-  .page-header h1 {
-    font-size: 28px;
+@media (max-width: 600px) {
+  .shop-page {
+    padding-top: 72px;
   }
 
-  .grid {
-    grid-template-columns: 1fr;
+  .shop-header__title {
+    font-size: 26px;
   }
 
-  .filter-inner {
+  .shop-card {
+    flex-basis: 250px;
+    width: 250px;
+  }
+
+  .shop-filter {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .search-box input {
-    flex: 1;
-    width: auto;
+  .shop-search {
+    input {
+      flex: 1;
+      width: auto;
+    }
   }
 }
 </style>

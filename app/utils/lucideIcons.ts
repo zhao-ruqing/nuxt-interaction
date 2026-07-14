@@ -7,6 +7,7 @@ import type { FunctionalComponent, SVGAttributes } from "vue";
 import {
   Bot,
   Brain,
+  Bug,
   Citrus,
   Coffee,
   Coins,
@@ -15,6 +16,7 @@ import {
   Diamond,
   Droplets,
   Frown,
+  LayoutGrid,
   Leaf,
   List,
   LoaderCircle,
@@ -46,6 +48,7 @@ export const DEFAULT_PRODUCT_ICON = "coffee";
 export const iconRegistry: Record<string, LucideIconComponent> = {
   bot: Bot,
   brain: Brain,
+  bug: Bug,
   citrus: Citrus,
   coffee: Coffee,
   coins: Coins,
@@ -54,6 +57,7 @@ export const iconRegistry: Record<string, LucideIconComponent> = {
   diamond: Diamond,
   droplets: Droplets,
   frown: Frown,
+  "layout-grid": LayoutGrid,
   leaf: Leaf,
   list: List,
   "loader-circle": LoaderCircle,

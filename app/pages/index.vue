@@ -606,12 +606,13 @@ function cleanup() {
   ScrollTrigger.getAll().forEach((st) => st.kill());
   magneticCleanups.forEach((fn) => fn());
   window.removeEventListener("resize", onResize);
-  document.body.classList.remove("void-body");
+  document.body.classList.remove("void-body", "void-body--mobile", "void-home-cursor");
 }
 
 onMounted(async () => {
   detectMobile();
-  document.body.classList.add("void-body");
+  document.body.classList.add("void-body", "void-home-cursor");
+  if (isMobile.value) document.body.classList.add("void-body--mobile");
   await runPreloader();
   isReady.value = true;
 
@@ -1410,8 +1411,8 @@ onUnmounted(cleanup);
 </style>
 
 <style lang="scss">
-// 首页全屏时覆盖全局 body 样式
-body.void-body {
+// 自定义光标仅首页启用（void-home-cursor 标记，避免影响其他 VOID 页）
+body.void-body.void-home-cursor {
   background: #030306;
   color: #f2f2f2;
   overflow-x: hidden;
@@ -1424,6 +1425,15 @@ body.void-body {
 
   h1, h2, h3, h4, h5, h6 {
     color: #f2f2f2;
+  }
+}
+
+body.void-body.void-home-cursor.void-body--mobile {
+  cursor: auto;
+
+  &,
+  * {
+    cursor: auto !important;
   }
 }
 </style>

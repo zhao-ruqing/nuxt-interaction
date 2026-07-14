@@ -4,8 +4,6 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <PageAgentTrigger />
-    <AiChatWidget />
-    <SentryErrorTrigger />
+    <VoidToolHub />
   </div>
 </template>

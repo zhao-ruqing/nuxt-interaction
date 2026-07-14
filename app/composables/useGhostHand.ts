@@ -1,31 +1,77 @@
-/** 幽灵手：虚拟光标移动并模拟点击。鼠标移动时自动中止以防止误操作。 */
+/** 幽灵手忙碌状态（跨组件共享，用于关闭 AI 浮窗等） */
+export function useGhostHandBusy() {
+  return useState('ghost-hand-busy', () => false)
+}
+
+/**
+ * 幽灵手：虚拟光标移动并模拟点击。
+ * 用户移动超过阈值距离，或真实点击页面时中止。
+ */
 export function useGhostHand() {
   const cursorEl = ref<HTMLElement | null>(null)
   const isActive = ref(false)
   const isAborted = ref(false)
+  const busy = useGhostHandBusy()
+
+  /** 累计移动超过该像素数后才中止（避免轻微抖动打断） */
+  const ABORT_DISTANCE = 56
+
   let mouseGuard: ((e: MouseEvent) => void) | null = null
+  let clickGuard: ((e: MouseEvent) => void) | null = null
+  let guardOriginX = 0
+  let guardOriginY = 0
+  let guardOriginSet = false
 
-  // ---- 鼠标守护：检测用户真实鼠标移动 ----
+  // ---- 用户中止守护 ----
 
+  /** 执行中止并提示 */
+  function abortByUser(reason: string) {
+    if (isAborted.value) return
+    isAborted.value = true
+    hide()
+    ElMessage.warning(reason)
+  }
+
+  /** 启动鼠标守护：长距移动或真实点击才取消 */
   function startMouseGuard() {
     if (mouseGuard) return
     isAborted.value = false
+    guardOriginSet = false
+    busy.value = true
+
     mouseGuard = (e: MouseEvent) => {
-      // 过滤掉 movementX/Y 均为 0 的伪事件（部分浏览器在页面加载/焦点变化时触发）
-      if (e.movementX === 0 && e.movementY === 0) return
-      isAborted.value = true
-      hide()
-      ElMessage.warning('检测到鼠标移动，幽灵手操作已取消')
-      stopMouseGuard()
+      if (!e.isTrusted) return
+      if (!guardOriginSet) {
+        guardOriginX = e.clientX
+        guardOriginY = e.clientY
+        guardOriginSet = true
+        return
+      }
+      const dist = Math.hypot(e.clientX - guardOriginX, e.clientY - guardOriginY)
+      if (dist < ABORT_DISTANCE) return
+      abortByUser('检测到较大幅度鼠标移动，幽灵手操作已取消')
     }
-    window.addEventListener('mousemove', mouseGuard)
+
+    clickGuard = (e: MouseEvent) => {
+      if (!e.isTrusted) return
+      abortByUser('检测到点击，幽灵手操作已取消')
+    }
+
+    window.addEventListener('mousemove', mouseGuard, { passive: true })
+    window.addEventListener('mousedown', clickGuard, true)
   }
 
+  /** 停止鼠标守护并清除监听 */
   function stopMouseGuard() {
     if (mouseGuard) {
       window.removeEventListener('mousemove', mouseGuard)
       mouseGuard = null
     }
+    if (clickGuard) {
+      window.removeEventListener('mousedown', clickGuard, true)
+      clickGuard = null
+    }
+    guardOriginSet = false
   }
 
   /** 检查是否已被用户中止，中止时抛出异常让调用方停止后续操作 */
@@ -108,9 +154,11 @@ export function useGhostHand() {
     await tap(el)
   }
 
+  /** 隐藏幽灵手光标并清理状态 */
   function hide() {
     if (cursorEl.value) cursorEl.value.style.display = 'none'
     isActive.value = false
+    busy.value = false
     document.querySelectorAll('.ghost-hand-highlight').forEach(el =>
       el.classList.remove('ghost-hand-highlight'),
     )
@@ -201,6 +249,7 @@ export function useGhostHand() {
 
   onUnmounted(() => {
     stopMouseGuard()
+    busy.value = false
     cursorEl.value?.remove()
     cursorEl.value = null
   })
