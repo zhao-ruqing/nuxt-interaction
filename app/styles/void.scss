@@ -429,27 +429,60 @@ body.void-dash-body {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 28px 16px;
   background: rgba(255, 255, 255, 0.02);
   border-right: 1px solid var(--void-border);
   backdrop-filter: blur(20px);
+  overflow: hidden;
 
   &__logo {
-    padding: 0 12px 32px;
+    flex-shrink: 0;
+    padding: 0 12px 24px;
     font-size: 16px;
     font-weight: 800;
     letter-spacing: 0.28em;
     color: var(--void-text);
   }
 
+  // 菜单区在视口变矮时自适应滚动，Logo / 底部操作固定
   &__nav {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-right: -4px;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+      margin: 4px 0;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 100px;
+      transition: background 0.2s;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
   }
 
   &__item {
+    flex-shrink: 0;
     padding: 11px 14px;
     border-radius: 10px;
     font-size: 13px;
@@ -471,6 +504,7 @@ body.void-dash-body {
   }
 
   &__footer {
+    flex-shrink: 0;
     padding-top: 16px;
     border-top: 1px solid var(--void-border);
   }

@@ -7,10 +7,10 @@
   </div>
 </template>
 <script setup lang="ts">
-definePageMeta({layout:'dashboard',middleware:'auth'})
-const cities=ref<any[]>([]);const points=ref<any[]>([]);const filterCity=ref<number|undefined>();const visible=ref(false);const saving=ref(false);const editingId=ref<number|null>(null);const statusText:any={published:'已发布',draft:'草稿',disabled:'停用'}
-const emptyForm=()=>({cityId:cities.value[0]?.id||0,name:'',code:'',category:'landmark',address:'',description:'',longitude:121.473701,latitude:31.230416,checkinRadius:500,pointsReward:10,status:'published'});const form=reactive(emptyForm())
-async function loadCities(){const response=await $fetch<any>('/api/admin/cities');cities.value=response.data}
+definePageMeta({layout:'dashboard',middleware:'admin'})
+const cities=ref<any[]>([]);const points=ref<any[]>([]);const settings=reactive({radius:500,points:10});const filterCity=ref<number|undefined>();const visible=ref(false);const saving=ref(false);const editingId=ref<number|null>(null);const statusText:any={published:'已发布',draft:'草稿',disabled:'停用'}
+const emptyForm=()=>({cityId:cities.value[0]?.id||0,name:'',code:'',category:'landmark',address:'',description:'',longitude:121.473701,latitude:31.230416,checkinRadius:settings.radius,pointsReward:settings.points,status:'published'});const form=reactive(emptyForm())
+async function loadCities(){const [cityResponse,settingResponse]=await Promise.all([$fetch<any>('/api/admin/cities'),$fetch<any>('/api/admin/settings')]);cities.value=cityResponse.data;const map=Object.fromEntries(settingResponse.data.map((item:any)=>[item.key,item.value]));settings.radius=Number(map.default_checkin_radius||500);settings.points=Number(map.default_checkin_points||10)}
 async function load(){const response=await $fetch<any>('/api/admin/points',{query:{cityId:filterCity.value}});points.value=response.data}
 function openCreate(){editingId.value=null;Object.assign(form,emptyForm());visible.value=true}
 function openEdit(point:any){editingId.value=point.id;Object.assign(form,point);visible.value=true}

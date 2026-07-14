@@ -10,11 +10,15 @@
       <div class="void-dash-stat-grid">
         <div class="void-dash-stat">
           <div class="void-dash-stat__label">用户名</div>
-          <div class="void-dash-stat__value">{{ userStore.user?.username }}</div>
+          <div class="void-dash-stat__value">
+            {{ userStore.user?.username }}
+          </div>
         </div>
         <div class="void-dash-stat">
           <div class="void-dash-stat__label">注册时间</div>
-          <div class="void-dash-stat__value">{{ formatDate(userStore.user?.created_at) }}</div>
+          <div class="void-dash-stat__value">
+            {{ formatDate(userStore.user?.created_at) }}
+          </div>
         </div>
         <div class="void-dash-stat">
           <div class="void-dash-stat__label">项目数</div>
@@ -27,20 +31,25 @@
       <div class="void-dash-panel chat-panel">
         <div class="chat-header">
           <span class="chat-title">AI 助手</span>
-          <el-button text size="small" @click="clearMessages">清空对话</el-button>
+          <el-button text size="small" @click="clearMessages"
+            >清空对话</el-button
+          >
         </div>
 
         <div ref="chatBodyRef" class="chat-body">
           <div v-if="messages.length === 0" class="chat-empty">
             <LucideIcon name="bot" :size="28" class="chat-empty-icon" />
-            <div class="chat-empty-text">我是你的 AI 助手，有什么可以帮你的？</div>
+            <div class="chat-empty-text">
+              我是你的 AI 助手，有什么可以帮你的？
+            </div>
             <div class="chat-suggestions">
               <span
                 v-for="tip in quickTips"
                 :key="tip"
                 class="chat-suggestion-item"
                 @click="sendMessage(tip)"
-              >{{ tip }}</span>
+                >{{ tip }}</span
+              >
             </div>
           </div>
           <div
@@ -77,7 +86,8 @@
             :disabled="!inputText.trim() || isStreaming"
             :loading="isStreaming"
             @click="handleSend"
-          >发送</el-button>
+            >发送</el-button
+          >
         </div>
       </div>
     </div>
@@ -220,7 +230,9 @@ watch(
   padding: 6px 14px;
   border-radius: 100px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -295,15 +307,27 @@ watch(
     background: var(--void-muted);
     animation: dot-bounce 1.4s infinite ease-in-out both;
 
-    &:nth-child(1) { animation-delay: 0s; }
-    &:nth-child(2) { animation-delay: 0.16s; }
-    &:nth-child(3) { animation-delay: 0.32s; }
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+    &:nth-child(2) {
+      animation-delay: 0.16s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.32s;
+    }
   }
 }
 
 @keyframes dot-bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
 .chat-footer {

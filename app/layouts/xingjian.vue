@@ -19,7 +19,7 @@
       <div class="xj-nav__account">
         <NuxtLink v-if="userStore.isLoggedIn" to="/profile">{{ userStore.user?.username }}</NuxtLink>
         <NuxtLink v-else to="/auth/login">登录</NuxtLink>
-        <NuxtLink to="/dashboard" class="xj-nav__console">控制台</NuxtLink>
+        <NuxtLink v-if="userStore.user?.role === 'admin'" to="/dashboard" class="xj-nav__console">控制台</NuxtLink>
       </div>
     </header>
     <main class="xj-main"><slot /></main>

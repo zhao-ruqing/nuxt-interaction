@@ -91,7 +91,7 @@ async function handleLogin() {
     const res = await post<any>("/api/auth/login", form);
     if (res.success) {
       ElMessage.success("登录成功");
-      window.location.href = "/dashboard";
+      window.location.href = res.user?.role === "admin" ? "/dashboard" : "/xingjian";
     } else {
       ElMessage.error(res.message);
     }

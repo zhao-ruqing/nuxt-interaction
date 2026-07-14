@@ -31,6 +31,16 @@ function parseNumber(value: unknown, fallback = 0) {
   return Number.isFinite(result) ? result : fallback
 }
 
+function calculateDistanceMeters(latitude1: number, longitude1: number, latitude2: number, longitude2: number) {
+  const radians = (degree: number) => degree * Math.PI / 180
+  const earthRadius = 6371000
+  const latitudeDelta = radians(latitude2 - latitude1)
+  const longitudeDelta = radians(longitude2 - longitude1)
+  const value = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(radians(latitude1)) * Math.cos(radians(latitude2)) * Math.sin(longitudeDelta / 2) ** 2
+  return Math.round(earthRadius * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value)))
+}
+
 function mapCity(row: any) {
   return {
     id: row.id,
@@ -312,11 +322,21 @@ export async function checkin(userId: number, pointId: number, location?: { long
   try {
     await connection.beginTransaction()
     const [points] = await connection.query(
-      "SELECT id, name, points_reward FROM xj_points WHERE id = ? AND status = 'published' FOR UPDATE",
+      "SELECT id, name, points_reward, longitude, latitude, checkin_radius FROM xj_points WHERE id = ? AND status = 'published' FOR UPDATE",
       [pointId],
     ) as any
     const point = points[0]
     if (!point) throw createError({ statusCode: 404, message: '点位不存在或未发布' })
+    const [settingRows] = await connection.query("SELECT setting_value FROM xj_settings WHERE setting_key = 'location_check_enabled'") as any
+    const locationCheckEnabled = settingRows[0]?.setting_value === 'true'
+    const hasLocation = Number.isFinite(location?.longitude) && Number.isFinite(location?.latitude)
+    if (locationCheckEnabled && !hasLocation) throw createError({ statusCode: 400, message: '当前已启用定位校验，请允许浏览器获取位置' })
+    const distanceMeters = hasLocation
+      ? calculateDistanceMeters(Number(location?.latitude), Number(location?.longitude), Number(point.latitude), Number(point.longitude))
+      : null
+    if (locationCheckEnabled && distanceMeters != null && distanceMeters > point.checkin_radius) {
+      throw createError({ statusCode: 409, message: `距离点位约 ${distanceMeters} 米，需进入 ${point.checkin_radius} 米范围` })
+    }
 
     const [existing] = await connection.query(
       'SELECT id FROM xj_checkins WHERE user_id = ? AND point_id = ? AND checkin_date = CURRENT_DATE',
@@ -325,9 +345,9 @@ export async function checkin(userId: number, pointId: number, location?: { long
     if (existing.length) throw createError({ statusCode: 409, message: '今天已经打卡过该点位' })
 
     await connection.query(
-      `INSERT INTO xj_checkins (user_id, point_id, checkin_date, longitude, latitude, points_awarded)
-       VALUES (?, ?, CURRENT_DATE, ?, ?, ?)`,
-      [userId, pointId, location?.longitude ?? null, location?.latitude ?? null, point.points_reward],
+      `INSERT INTO xj_checkins (user_id, point_id, checkin_date, longitude, latitude, distance_meters, points_awarded)
+       VALUES (?, ?, CURRENT_DATE, ?, ?, ?, ?)`,
+      [userId, pointId, location?.longitude ?? null, location?.latitude ?? null, distanceMeters, point.points_reward],
     )
     await connection.query(
       `INSERT INTO xj_point_accounts (user_id, balance, total_earned) VALUES (?, ?, ?)
@@ -354,7 +374,7 @@ export async function checkin(userId: number, pointId: number, location?: { long
       [userId, userId],
     )
     await connection.commit()
-    return { pointId, pointName: point.name, awarded: point.points_reward, balance: accounts[0].balance }
+    return { pointId, pointName: point.name, awarded: point.points_reward, balance: accounts[0].balance, distanceMeters }
   }
   catch (error) {
     await connection.rollback()

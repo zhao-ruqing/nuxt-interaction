@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import pool from './db'
 import type { AuthUser } from './auth'
 import { getAuthUser } from './auth'
 
@@ -24,8 +25,10 @@ export async function createContext(event: Parameters<typeof getAuthUser>[0]): P
 export async function createAdminContext(event: Parameters<typeof getAuthUser>[0]): Promise<RequestContext | null> {
   const context = await createContext(event)
   if (!context) return null
-  if (context.user.role !== 'admin') {
+  const [rows] = await pool.query('SELECT role FROM users WHERE id = ?', [context.user.id]) as any
+  if (rows[0]?.role !== 'admin') {
     throw createError({ statusCode: 403, message: '需要管理员权限' })
   }
+  context.user.role = 'admin'
   return context
 }

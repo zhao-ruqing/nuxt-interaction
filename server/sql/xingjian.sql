@@ -359,6 +359,7 @@ INSERT INTO xj_settings (setting_key, setting_value, value_type, label, descript
 ('default_checkin_radius', '500', 'number', '默认打卡半径', '新建点位时建议使用的围栏半径，单位米'),
 ('default_checkin_points', '10', 'number', '默认打卡积分', '新建点位时建议发放的基础积分'),
 ('daily_checkin_limit', '1', 'number', '单点每日打卡次数', '当前业务通过唯一约束固定为每日一次'),
+('location_check_enabled', 'false', 'boolean', '启用定位围栏校验', '开启后打卡必须提供浏览器定位且位于点位半径内'),
 ('payment_mode', 'mock', 'string', '支付模式', '当前固定为 mock 模拟支付'),
 ('ranking_limit', '50', 'number', '排行榜展示人数', '个人榜和团队榜默认展示上限')
 ON DUPLICATE KEY UPDATE label = VALUES(label), description = VALUES(description);

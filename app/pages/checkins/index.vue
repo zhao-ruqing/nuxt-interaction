@@ -13,7 +13,7 @@
         <h2>{{ point.name }}</h2><p>{{ point.address }}</p><p>{{ point.description }}</p>
         <div class="xj-card__footer">
           <span class="xj-points">+{{ point.pointsReward }} PTS</span>
-          <div style="display:flex;gap:10px"><NuxtLink class="xj-button xj-button--ghost" :to="`/checkins/${point.id}`">详情</NuxtLink><button class="xj-button" :disabled="point.checkedToday" @click="submitCheckin(point)">{{ point.checkedToday ? '今日已打卡' : '立即打卡' }}</button></div>
+          <div style="display:flex;gap:10px"><NuxtLink class="xj-button xj-button--ghost" :to="`/checkins/${point.id}`">详情</NuxtLink><button class="xj-button" :disabled="point.checkedToday || locating" @click="submitCheckin(point)">{{ point.checkedToday ? '今日已打卡' : locating ? '正在定位' : '定位打卡' }}</button></div>
         </div>
       </article>
     </div>
@@ -28,13 +28,14 @@ const keyword = ref('')
 const { data: cityData } = await useFetch<any>('/api/cities')
 const cities = computed(() => cityData.value?.data || [])
 const points = ref<any[]>([])
+const { locating, submitXingjianCheckin } = useXingjianCheckin()
 async function refreshPoints() {
   const response = await $fetch<any>('/api/points', { query: { cityId: cityId.value || undefined, keyword: keyword.value || undefined } })
   points.value = response.data
 }
 async function submitCheckin(point: any) {
   try {
-    const response = await $fetch<any>('/api/checkins', { method: 'POST', body: { pointId: point.id } })
+    const response = await submitXingjianCheckin(point.id)
     ElMessage.success(response.message)
     point.checkedToday = true
   } catch (error: any) { ElMessage.error(error?.data?.message || '打卡失败') }
