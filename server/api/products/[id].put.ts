@@ -1,8 +1,8 @@
-import { createContext } from '../../utils/context'
+import { createAdminContext } from '../../utils/context'
 import { parseProductInput, updateProduct } from '../../services/product.service'
 
 export default defineEventHandler(async (event) => {
-  const ctx = await createContext(event)
+  const ctx = await createAdminContext(event)
   if (!ctx) {
     return { success: false, message: '未登录' }
   }

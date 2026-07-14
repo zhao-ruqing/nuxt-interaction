@@ -1,5 +1,19 @@
 SET NAMES utf8mb4;
 
+SET @role_column_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'
+);
+SET @add_role_sql = IF(
+  @role_column_exists = 0,
+  "ALTER TABLE users ADD COLUMN role ENUM('user','admin') NOT NULL DEFAULT 'user' AFTER password",
+  'SELECT 1'
+);
+PREPARE add_role_statement FROM @add_role_sql;
+EXECUTE add_role_statement;
+DEALLOCATE PREPARE add_role_statement;
+UPDATE users SET role = 'admin' WHERE username = 'admin' OR id = 1;
+
 CREATE TABLE IF NOT EXISTS xj_cities (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(50) NOT NULL,
@@ -329,3 +343,22 @@ INSERT INTO xj_badges (code, name, description, icon, trigger_type, trigger_valu
 ('ten-checkins', '坐标收藏家', '累计完成 10 次点位打卡。', 'map-pinned', 'checkin_count', 10),
 ('first-route', '路线完成者', '完成第一条城市探索路线。', 'route', 'route_complete', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description);
+
+CREATE TABLE IF NOT EXISTS xj_settings (
+  setting_key VARCHAR(64) PRIMARY KEY,
+  setting_value VARCHAR(500) NOT NULL,
+  value_type ENUM('string', 'number', 'boolean') NOT NULL DEFAULT 'string',
+  label VARCHAR(100) NOT NULL,
+  description VARCHAR(255) NOT NULL DEFAULT '',
+  updated_by INT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_xj_settings_user FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行鉴系统设置';
+
+INSERT INTO xj_settings (setting_key, setting_value, value_type, label, description) VALUES
+('default_checkin_radius', '500', 'number', '默认打卡半径', '新建点位时建议使用的围栏半径，单位米'),
+('default_checkin_points', '10', 'number', '默认打卡积分', '新建点位时建议发放的基础积分'),
+('daily_checkin_limit', '1', 'number', '单点每日打卡次数', '当前业务通过唯一约束固定为每日一次'),
+('payment_mode', 'mock', 'string', '支付模式', '当前固定为 mock 模拟支付'),
+('ranking_limit', '50', 'number', '排行榜展示人数', '个人榜和团队榜默认展示上限')
+ON DUPLICATE KEY UPDATE label = VALUES(label), description = VALUES(description);

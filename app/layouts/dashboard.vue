@@ -55,6 +55,11 @@
           :class="{ 'is-active': route.path === '/dashboard/users' }"
         >行鉴用户</NuxtLink>
         <NuxtLink
+          to="/dashboard/settings"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/settings' }"
+        >系统设置</NuxtLink>
+        <NuxtLink
           to="/dashboard/manage-products"
           class="void-dash-sidebar__item"
           :class="{ 'is-active': route.path === '/dashboard/manage-products' }"
@@ -101,6 +106,7 @@ const pageTitleMap: Record<string, string> = {
   "/dashboard/mall-products": "积分商品管理",
   "/dashboard/orders": "兑换订单管理",
   "/dashboard/users": "行鉴用户管理",
+  "/dashboard/settings": "行鉴系统设置",
   "/dashboard/manage-products": "商品管理",
   "/dashboard/audit-logs": "操作日志",
   "/dashboard/personality": "人格测试",

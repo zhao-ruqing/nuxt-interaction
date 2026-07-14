@@ -1,3 +1,3 @@
 import { listAdminUsers } from '../../../services/xingjian-admin.service'
-import { createContext } from '../../../utils/context'
-export default defineEventHandler(async (event) => { if (!await createContext(event)) throw createError({ statusCode: 401, message: '请先登录' }); return { success: true, data: await listAdminUsers() } })
+import { createAdminContext } from '../../../utils/context'
+export default defineEventHandler(async (event) => { if (!await createAdminContext(event)) throw createError({ statusCode: 401, message: '请先登录' }); return { success: true, data: await listAdminUsers() } })

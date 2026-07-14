@@ -1,5 +1,5 @@
 export const useUserStore = defineStore('user', () => {
-  const user = ref<{ id: number; username: string; created_at?: string } | null>(null)
+  const user = ref<{ id: number; username: string; role: 'user' | 'admin'; created_at?: string } | null>(null)
   const isLoggedIn = computed(() => !!user.value)
 
   async function fetchUser() {

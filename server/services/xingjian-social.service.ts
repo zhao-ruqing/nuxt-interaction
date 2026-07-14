@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 import pool from '../utils/db'
 
 export async function getSocialOverview(userId: number) {
-  const [[friendRows], [requestRows], [teamRows]] = await Promise.all([
+  const [[friendRows], [requestRows], [teamRows], [teamMemberRows]] = await Promise.all([
     pool.query(
       `SELECT u.id, u.username, COALESCE(a.total_earned, 0) AS total_earned, COUNT(ci.id) AS checkin_count
        FROM xj_friendships f JOIN users u ON u.id = f.friend_id
@@ -27,11 +27,19 @@ export async function getSocialOverview(userId: number) {
        WHERE tm.user_id = ? GROUP BY t.id, tm.role`,
       [userId],
     ),
+    pool.query(
+      `SELECT u.id, u.username, tm.role, COALESCE(a.total_earned, 0) AS total_earned
+       FROM xj_team_members mine JOIN xj_team_members tm ON tm.team_id = mine.team_id
+       JOIN users u ON u.id = tm.user_id LEFT JOIN xj_point_accounts a ON a.user_id = u.id
+       WHERE mine.user_id = ? ORDER BY tm.role, a.total_earned DESC`,
+      [userId],
+    ),
   ]) as any
   return {
     friends: friendRows.map((row: any) => ({ id: row.id, username: row.username, totalEarned: row.total_earned, checkinCount: Number(row.checkin_count) })),
     requests: requestRows.map((row: any) => ({ id: row.id, senderId: row.sender_id, senderName: row.sender_name, message: row.message, createdAt: row.created_at })),
     team: teamRows[0] ? { id: teamRows[0].id, name: teamRows[0].name, code: teamRows[0].code, description: teamRows[0].description, role: teamRows[0].role, memberCount: Number(teamRows[0].member_count), totalPoints: Number(teamRows[0].total_points) } : null,
+    teamMembers: teamMemberRows.map((row: any) => ({ id: row.id, username: row.username, role: row.role, totalEarned: row.total_earned })),
   }
 }
 
@@ -130,4 +138,17 @@ export async function getTeamRankings() {
      GROUP BY t.id ORDER BY total_points DESC, member_count DESC LIMIT 50`,
   ) as any
   return rows.map((row: any, index: number) => ({ rank: index + 1, id: row.id, name: row.name, code: row.code, memberCount: Number(row.member_count), totalPoints: Number(row.total_points) }))
+}
+
+export async function getFriendRankings(userId: number) {
+  const [rows] = await pool.query(
+    `SELECT u.id AS user_id, u.username, COALESCE(a.balance, 0) AS balance, COALESCE(a.total_earned, 0) AS total_earned,
+            COUNT(ci.id) AS checkin_count
+     FROM users u LEFT JOIN xj_point_accounts a ON a.user_id = u.id
+     LEFT JOIN xj_checkins ci ON ci.user_id = u.id
+     WHERE u.id = ? OR u.id IN (SELECT friend_id FROM xj_friendships WHERE user_id = ?)
+     GROUP BY u.id ORDER BY total_earned DESC, checkin_count DESC`,
+    [userId, userId],
+  ) as any
+  return rows.map((row: any, index: number) => ({ rank: index + 1, userId: row.user_id, username: row.username, balance: row.balance, totalEarned: row.total_earned, checkinCount: Number(row.checkin_count) }))
 }

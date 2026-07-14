@@ -20,3 +20,12 @@ export async function createContext(event: Parameters<typeof getAuthUser>[0]): P
     requestId: getRequestHeader(event, 'x-request-id') ?? randomUUID(),
   }
 }
+
+export async function createAdminContext(event: Parameters<typeof getAuthUser>[0]): Promise<RequestContext | null> {
+  const context = await createContext(event)
+  if (!context) return null
+  if (context.user.role !== 'admin') {
+    throw createError({ statusCode: 403, message: '需要管理员权限' })
+  }
+  return context
+}

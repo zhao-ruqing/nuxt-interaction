@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10)
-  const [result] = await pool.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword]) as any
+  const [result] = await pool.query("INSERT INTO users (username, password, role) VALUES (?, ?, 'user')", [username, hashedPassword]) as any
 
-  return { success: true, user: { id: result.insertId, username } }
+  return { success: true, user: { id: result.insertId, username, role: 'user' } }
 })

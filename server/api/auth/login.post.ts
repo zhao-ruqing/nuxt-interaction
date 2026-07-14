@@ -22,7 +22,8 @@ export default defineEventHandler(async (event) => {
     return { success: false, message: '用户名或密码错误' }
   }
 
-  const token = await new SignJWT({ id: user.id, username: user.username })
+  const role = user.role === 'admin' ? 'admin' : 'user'
+  const token = await new SignJWT({ id: user.id, username: user.username, role })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
     .sign(JWT_SECRET)
@@ -34,5 +35,5 @@ export default defineEventHandler(async (event) => {
     maxAge: 60 * 60 * 24 * 7,
   })
 
-  return { success: true, user: { id: user.id, username: user.username } }
+  return { success: true, user: { id: user.id, username: user.username, role } }
 })

@@ -1,7 +1,7 @@
 import { jwtVerify } from 'jose'
 import pool from '../../utils/db'
 
-const JWT_SECRET = new TextEncoder().encode('nuxt-interaction-jwt-secret-key-2025')
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'nuxt-interaction-jwt-secret-key-2025')
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'auth_token')
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     return { success: false, message: '登录已过期，请重新登录' }
   }
 
-  const [rows] = await pool.query('SELECT id, username, created_at FROM users WHERE id = ?', [payload.id]) as any
+  const [rows] = await pool.query('SELECT id, username, role, created_at FROM users WHERE id = ?', [payload.id]) as any
   if (rows.length === 0) {
     return { success: false, message: '用户不存在' }
   }

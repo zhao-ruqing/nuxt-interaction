@@ -48,13 +48,48 @@ export async function saveRoute(id: number | null, input: ReturnType<typeof pars
 
 export async function listAdminUsers() {
   const [rows] = await pool.query(
-    `SELECT u.id, u.username, u.created_at, COALESCE(a.balance,0) AS balance, COALESCE(a.total_earned,0) AS total_earned,
+    `SELECT u.id, u.username, u.role, u.created_at, COALESCE(a.balance,0) AS balance, COALESCE(a.total_earned,0) AS total_earned,
             COUNT(DISTINCT ci.id) AS checkin_count, COUNT(DISTINCT ub.id) AS badge_count
      FROM users u LEFT JOIN xj_point_accounts a ON a.user_id = u.id
      LEFT JOIN xj_checkins ci ON ci.user_id = u.id LEFT JOIN xj_user_badges ub ON ub.user_id = u.id
      GROUP BY u.id ORDER BY u.id DESC`,
   ) as any
-  return rows.map((row: any) => ({ id: row.id, username: row.username, createdAt: row.created_at, balance: row.balance, totalEarned: row.total_earned, checkinCount: Number(row.checkin_count), badgeCount: Number(row.badge_count) }))
+  return rows.map((row: any) => ({ id: row.id, username: row.username, role: row.role, createdAt: row.created_at, balance: row.balance, totalEarned: row.total_earned, checkinCount: Number(row.checkin_count), badgeCount: Number(row.badge_count) }))
+}
+
+export async function updateUserRole(operatorId: number, userId: number, role: string) {
+  if (!['user', 'admin'].includes(role)) throw createError({ statusCode: 400, message: '角色无效' })
+  if (operatorId === userId && role !== 'admin') throw createError({ statusCode: 409, message: '不能取消自己的管理员权限' })
+  const [result] = await pool.query('UPDATE users SET role = ? WHERE id = ?', [role, userId]) as any
+  if (!result.affectedRows) throw createError({ statusCode: 404, message: '用户不存在' })
+  return { id: userId, role }
+}
+
+export async function listSettings() {
+  const [rows] = await pool.query('SELECT * FROM xj_settings ORDER BY setting_key') as any
+  return rows.map((row: any) => ({ key: row.setting_key, value: row.setting_value, valueType: row.value_type, label: row.label, description: row.description, updatedAt: row.updated_at }))
+}
+
+export async function updateSettings(userId: number, values: Record<string, unknown>) {
+  const [rows] = await pool.query('SELECT setting_key FROM xj_settings') as any
+  const allowed = new Set(rows.map((row: any) => row.setting_key))
+  const connection = await pool.getConnection()
+  try {
+    await connection.beginTransaction()
+    for (const [key, value] of Object.entries(values)) {
+      if (!allowed.has(key)) continue
+      await connection.query('UPDATE xj_settings SET setting_value = ?, updated_by = ? WHERE setting_key = ?', [String(value), userId, key])
+    }
+    await connection.commit()
+    return listSettings()
+  }
+  catch (error) {
+    await connection.rollback()
+    throw error
+  }
+  finally {
+    connection.release()
+  }
 }
 
 export async function listAdminActivities() {
