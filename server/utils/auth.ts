@@ -1,6 +1,6 @@
 import { jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode('nuxt-interaction-jwt-secret-key-2025')
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'nuxt-interaction-jwt-secret-key-2025')
 
 export interface AuthUser {
   id: number

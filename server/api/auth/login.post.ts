@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt'
 import { SignJWT } from 'jose'
 import pool from '../../utils/db'
 
-const JWT_SECRET = new TextEncoder().encode('nuxt-interaction-jwt-secret-key-2025')
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'nuxt-interaction-jwt-secret-key-2025')
 
 export default defineEventHandler(async (event) => {
   const { username, password } = await readBody(event)

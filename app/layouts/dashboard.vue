@@ -20,6 +20,16 @@
           :class="{ 'is-active': route.path === '/dashboard/map' }"
         >地图标注</NuxtLink>
         <NuxtLink
+          to="/dashboard/cities"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/cities' }"
+        >行鉴城市</NuxtLink>
+        <NuxtLink
+          to="/dashboard/points"
+          class="void-dash-sidebar__item"
+          :class="{ 'is-active': route.path === '/dashboard/points' }"
+        >行鉴点位</NuxtLink>
+        <NuxtLink
           to="/dashboard/manage-products"
           class="void-dash-sidebar__item"
           :class="{ 'is-active': route.path === '/dashboard/manage-products' }"
@@ -59,6 +69,8 @@ const userStore = useUserStore();
 const pageTitleMap: Record<string, string> = {
   "/dashboard": "控制台概览",
   "/dashboard/map": "地图标注",
+  "/dashboard/cities": "行鉴城市管理",
+  "/dashboard/points": "行鉴点位管理",
   "/dashboard/manage-products": "商品管理",
   "/dashboard/audit-logs": "操作日志",
   "/dashboard/personality": "人格测试",

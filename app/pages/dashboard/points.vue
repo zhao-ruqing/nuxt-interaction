@@ -1,0 +1,20 @@
+<template>
+  <div class="void-dash-page">
+    <div class="void-dash-header"><div><span class="void-dash-eyebrow">XINGJIAN / POINTS</span><h1>点位管理</h1><p class="void-dash-desc">维护打卡点位、积分规则和基础围栏半径</p></div><button class="admin-button" @click="openCreate">新增点位</button></div>
+    <div class="admin-filter"><el-select v-model="filterCity" clearable placeholder="全部城市" @change="load"><el-option v-for="city in cities" :key="city.id" :label="city.name" :value="city.id" /></el-select><span>共 {{ points.length }} 个点位</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>ID</th><th>城市</th><th>点位</th><th>地址</th><th>奖励</th><th>半径</th><th>状态</th><th>操作</th></tr></thead><tbody><tr v-for="point in points" :key="point.id"><td>#{{ point.id }}</td><td>{{ point.cityName }}</td><td><strong>{{ point.name }}</strong><small>{{ point.code }}</small></td><td>{{ point.address }}</td><td class="highlight">+{{ point.pointsReward }}</td><td>{{ point.checkinRadius }}m</td><td>{{ statusText[point.status] }}</td><td><button class="admin-link" @click="openEdit(point)">编辑</button></td></tr></tbody></table></div>
+    <el-dialog v-model="visible" :title="editingId ? '编辑点位' : '新增点位'" width="760px"><el-form label-position="top"><div class="form-grid form-grid--3"><el-form-item label="所属城市"><el-select v-model="form.cityId"><el-option v-for="city in cities" :key="city.id" :label="city.name" :value="city.id" /></el-select></el-form-item><el-form-item label="点位名称"><el-input v-model="form.name" /></el-form-item><el-form-item label="点位编码"><el-input v-model="form.code" /></el-form-item><el-form-item label="分类"><el-input v-model="form.category" /></el-form-item><el-form-item label="经度"><el-input-number v-model="form.longitude" :precision="6" :controls="false" /></el-form-item><el-form-item label="纬度"><el-input-number v-model="form.latitude" :precision="6" :controls="false" /></el-form-item><el-form-item label="积分奖励"><el-input-number v-model="form.pointsReward" :min="0" /></el-form-item><el-form-item label="围栏半径（米）"><el-input-number v-model="form.checkinRadius" :min="50" /></el-form-item><el-form-item label="状态"><el-select v-model="form.status"><el-option label="已发布" value="published"/><el-option label="草稿" value="draft"/><el-option label="停用" value="disabled"/></el-select></el-form-item></div><el-form-item label="详细地址"><el-input v-model="form.address" /></el-form-item><el-form-item label="点位介绍"><el-input v-model="form.description" type="textarea" :rows="4" /></el-form-item></el-form><template #footer><el-button @click="visible=false">取消</el-button><el-button type="primary" :loading="saving" @click="save">保存</el-button></template></el-dialog>
+  </div>
+</template>
+<script setup lang="ts">
+definePageMeta({layout:'dashboard',middleware:'auth'})
+const cities=ref<any[]>([]);const points=ref<any[]>([]);const filterCity=ref<number|undefined>();const visible=ref(false);const saving=ref(false);const editingId=ref<number|null>(null);const statusText:any={published:'已发布',draft:'草稿',disabled:'停用'}
+const emptyForm=()=>({cityId:cities.value[0]?.id||0,name:'',code:'',category:'landmark',address:'',description:'',longitude:121.473701,latitude:31.230416,checkinRadius:500,pointsReward:10,status:'published'});const form=reactive(emptyForm())
+async function loadCities(){const response=await $fetch<any>('/api/admin/cities');cities.value=response.data}
+async function load(){const response=await $fetch<any>('/api/admin/points',{query:{cityId:filterCity.value}});points.value=response.data}
+function openCreate(){editingId.value=null;Object.assign(form,emptyForm());visible.value=true}
+function openEdit(point:any){editingId.value=point.id;Object.assign(form,point);visible.value=true}
+async function save(){saving.value=true;try{await $fetch(editingId.value?`/api/admin/points/${editingId.value}`:'/api/admin/points',{method:editingId.value?'PUT':'POST',body:form});ElMessage.success('保存成功');visible.value=false;await load()}catch(error:any){ElMessage.error(error?.data?.message||'保存失败')}finally{saving.value=false}}
+await loadCities();await load()
+</script>
+<style scoped lang="scss">@use '@/styles/xingjian-admin.scss' as *;</style>
