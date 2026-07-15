@@ -50,7 +50,9 @@
           >查询</el-button
         >
       </div>
-      <span class="void-dash-filter__total">共 <b>{{ total }}</b> 件商品</span>
+      <span class="void-dash-filter__total"
+        >共 <b>{{ total }}</b> 件商品</span
+      >
     </div>
 
     <div class="void-dash-table-wrap">
@@ -131,7 +133,11 @@
     >
       <template #header>
         <div class="dialog-header">
-          <LucideIcon :name="form.image" :size="36" class="dialog-header-icon" />
+          <LucideIcon
+            :name="form.image"
+            :size="36"
+            class="dialog-header-icon"
+          />
           <div class="dialog-header-text">
             <h3>{{ editingId ? "编辑商品" : "新增商品" }}</h3>
             <p>
@@ -385,8 +391,7 @@
 
 <script setup lang="ts">
 import { Search } from "@lucide/vue";
-import { DEFAULT_PRODUCT_ICON } from "~/utils/lucideIcons";
-import { useAdminAutomationStore } from '~/stores/adminAutomation'
+import { useAdminAutomationStore } from "~/stores/adminAutomation";
 import type {
   Category,
   Product,
@@ -395,6 +400,7 @@ import type {
   ProductListResponse,
   ProductMutationResponse,
 } from "~/types/product";
+import { DEFAULT_PRODUCT_ICON } from "~/utils/lucideIcons";
 
 definePageMeta({
   layout: "dashboard",
@@ -665,7 +671,9 @@ onMounted(async () => {
   background: transparent;
   color: var(--void-muted);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &:hover {
     background: rgba(255, 255, 255, 0.06);

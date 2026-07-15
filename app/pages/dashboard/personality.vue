@@ -12,15 +12,20 @@
         请点击下方按钮，在新窗口中完成测试。
       </p>
       <div class="personality-actions">
-        <button class="void-btn void-btn--primary" @click="openTest">在新窗口打开测试</button>
-        <button class="void-btn void-btn--ghost" @click="copyLink">复制链接</button>
+        <button class="void-btn void-btn--primary" @click="openTest">
+          在新窗口打开测试
+        </button>
+        <button class="void-btn void-btn--ghost" @click="copyLink">
+          复制链接
+        </button>
       </div>
       <a
         class="personality-link"
         :href="PERSONALITY_URL"
         target="_blank"
         rel="noopener noreferrer"
-      >{{ PERSONALITY_URL }}</a>
+        >{{ PERSONALITY_URL }}</a
+      >
     </div>
   </div>
 </template>

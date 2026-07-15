@@ -3,7 +3,9 @@
     <div class="void-dash-header">
       <div>
         <h2>操作日志</h2>
-        <p class="void-dash-desc">记录商品、地图点位等管理操作，便于追溯与审计</p>
+        <p class="void-dash-desc">
+          记录商品、地图点位等管理操作，便于追溯与审计
+        </p>
       </div>
     </div>
 
@@ -85,7 +87,11 @@
         <el-table-column prop="username" label="操作人" width="120" />
         <el-table-column label="操作类型" width="160">
           <template #default="{ row }">
-            <el-tag :type="getActionTagType(row.action)" size="small" effect="plain">
+            <el-tag
+              :type="getActionTagType(row.action)"
+              size="small"
+              effect="plain"
+            >
               {{ getActionLabel(row.action) }}
             </el-tag>
           </template>
@@ -134,10 +140,7 @@
       align-center
       class="audit-detail-dialog"
     >
-      <AuditLogDiff
-        v-if="detailMode === 'diff'"
-        :metadata="detailMetadata"
-      />
+      <AuditLogDiff v-if="detailMode === 'diff'" :metadata="detailMetadata" />
       <pre v-else class="detail-json">{{ detailJson }}</pre>
     </el-dialog>
   </div>
@@ -145,12 +148,12 @@
 
 <script setup lang="ts">
 import { Search } from "@lucide/vue";
-import { canShowDiff } from "~/utils/auditDiff";
 import type {
   ActionRegistryGroup,
   AuditLog,
   AuditLogListResponse,
 } from "~/types/auditLog";
+import { canShowDiff } from "~/utils/auditDiff";
 
 definePageMeta({
   layout: "dashboard",
@@ -210,7 +213,9 @@ function getActionLabel(action: string) {
   return action;
 }
 
-function getActionTagType(action: string): "success" | "warning" | "danger" | "info" {
+function getActionTagType(
+  action: string,
+): "success" | "warning" | "danger" | "info" {
   if (action.endsWith(".create")) return "success";
   if (action.endsWith(".update")) return "warning";
   if (action.endsWith(".delete")) return "danger";
@@ -226,8 +231,7 @@ function openDetail(row: AuditLog) {
       : row.action.endsWith(".delete")
         ? "删除详情"
         : "变更对比";
-  }
-  else {
+  } else {
     detailMode.value = "json";
     detailTitle.value = "原始数据";
     detailJson.value = JSON.stringify(row.metadata, null, 2);

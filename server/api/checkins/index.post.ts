@@ -10,6 +10,8 @@ export default defineEventHandler(async (event) => {
   const data = await checkin(context.user.id, pointId, {
     longitude: body?.longitude == null ? undefined : Number(body.longitude),
     latitude: body?.latitude == null ? undefined : Number(body.latitude),
+    accuracy: body?.accuracy == null ? undefined : Number(body.accuracy),
   })
-  return { success: true, message: `打卡成功，获得 ${data.awarded} 积分`, data }
+  const distanceText = data.distanceMeters == null ? '' : `，距点位约 ${data.distanceMeters} 米`
+  return { success: true, message: `打卡成功${distanceText}，获得 ${data.awarded} 积分`, data }
 })

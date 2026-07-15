@@ -317,7 +317,7 @@ export async function completeRoute(userId: number, routeId: number) {
   }
 }
 
-export async function checkin(userId: number, pointId: number, location?: { longitude?: number, latitude?: number }) {
+export async function checkin(userId: number, pointId: number, location?: { longitude?: number, latitude?: number, accuracy?: number }) {
   const connection = await pool.getConnection()
   try {
     await connection.beginTransaction()
@@ -327,12 +327,30 @@ export async function checkin(userId: number, pointId: number, location?: { long
     ) as any
     const point = points[0]
     if (!point) throw createError({ statusCode: 404, message: '点位不存在或未发布' })
-    const [settingRows] = await connection.query("SELECT setting_value FROM xj_settings WHERE setting_key = 'location_check_enabled'") as any
-    const locationCheckEnabled = settingRows[0]?.setting_value === 'true'
-    const hasLocation = Number.isFinite(location?.longitude) && Number.isFinite(location?.latitude)
+    const [settingRows] = await connection.query(
+      "SELECT setting_key, setting_value FROM xj_settings WHERE setting_key IN ('location_check_enabled', 'location_max_accuracy')",
+    ) as any
+    const settings = Object.fromEntries(settingRows.map((row: any) => [row.setting_key, row.setting_value]))
+    const locationCheckEnabled = settings.location_check_enabled !== 'false'
+    const maxAccuracy = Math.max(10, Number(settings.location_max_accuracy || 100))
+    const longitude = Number(location?.longitude)
+    const latitude = Number(location?.latitude)
+    const accuracy = Number(location?.accuracy)
+    const hasLocation = Number.isFinite(longitude)
+      && Number.isFinite(latitude)
+      && longitude >= -180
+      && longitude <= 180
+      && latitude >= -90
+      && latitude <= 90
     if (locationCheckEnabled && !hasLocation) throw createError({ statusCode: 400, message: '当前已启用定位校验，请允许浏览器获取位置' })
+    if (locationCheckEnabled && (!Number.isFinite(accuracy) || accuracy <= 0)) {
+      throw createError({ statusCode: 400, message: '定位结果缺少精度信息，请重新定位' })
+    }
+    if (locationCheckEnabled && accuracy > maxAccuracy) {
+      throw createError({ statusCode: 409, message: `当前定位精度约 ${Math.round(accuracy)} 米，需提高到 ${maxAccuracy} 米以内再打卡` })
+    }
     const distanceMeters = hasLocation
-      ? calculateDistanceMeters(Number(location?.latitude), Number(location?.longitude), Number(point.latitude), Number(point.longitude))
+      ? calculateDistanceMeters(latitude, longitude, Number(point.latitude), Number(point.longitude))
       : null
     if (locationCheckEnabled && distanceMeters != null && distanceMeters > point.checkin_radius) {
       throw createError({ statusCode: 409, message: `距离点位约 ${distanceMeters} 米，需进入 ${point.checkin_radius} 米范围` })
@@ -345,9 +363,9 @@ export async function checkin(userId: number, pointId: number, location?: { long
     if (existing.length) throw createError({ statusCode: 409, message: '今天已经打卡过该点位' })
 
     await connection.query(
-      `INSERT INTO xj_checkins (user_id, point_id, checkin_date, longitude, latitude, distance_meters, points_awarded)
-       VALUES (?, ?, CURRENT_DATE, ?, ?, ?, ?)`,
-      [userId, pointId, location?.longitude ?? null, location?.latitude ?? null, distanceMeters, point.points_reward],
+      `INSERT INTO xj_checkins (user_id, point_id, checkin_date, longitude, latitude, accuracy_meters, distance_meters, points_awarded)
+       VALUES (?, ?, CURRENT_DATE, ?, ?, ?, ?, ?)`,
+      [userId, pointId, hasLocation ? longitude : null, hasLocation ? latitude : null, Number.isFinite(accuracy) ? accuracy : null, distanceMeters, point.points_reward],
     )
     await connection.query(
       `INSERT INTO xj_point_accounts (user_id, balance, total_earned) VALUES (?, ?, ?)

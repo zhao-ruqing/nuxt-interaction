@@ -57,6 +57,8 @@ export default defineNuxtConfig({
     // public表示在客户端和服务端都可以访问的变量
     public: {
       baseURL: "http://localhost:3000",
+      amapKey: process.env.NUXT_PUBLIC_AMAP_KEY || "75e7e73e950401aa1362427451d2cc69",
+      amapSecurityCode: process.env.NUXT_PUBLIC_AMAP_SECURITY_CODE || "fb4f4ae4a9bcc783ca84ac4b12c93571",
     },
   },
 });

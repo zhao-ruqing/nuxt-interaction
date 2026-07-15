@@ -4,7 +4,9 @@
       <NuxtLink to="/" class="void-nav__logo" data-magnetic>VOID</NuxtLink>
       <nav class="void-nav__links">
         <NuxtLink to="/" class="void-nav__link" data-magnetic>首页</NuxtLink>
-        <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic>登录</NuxtLink>
+        <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic
+          >登录</NuxtLink
+        >
       </nav>
     </header>
 
@@ -89,7 +91,11 @@ const formRef = ref<FormInstance>();
 const cardRef = ref<HTMLElement>();
 
 /** 校验两次密码是否一致 */
-const validateConfirm = (_rule: unknown, value: string, callback: (err?: Error) => void) => {
+const validateConfirm = (
+  _rule: unknown,
+  value: string,
+  callback: (err?: Error) => void,
+) => {
   if (value !== form.password) {
     callback(new Error("两次输入的密码不一致"));
   } else {
@@ -146,9 +152,17 @@ async function handleRegister() {
 function playEnterAnimation() {
   const card = cardRef.value;
   if (!card) return;
-  gsap.fromTo(card, { y: 48, opacity: 0, scale: 0.96 }, {
-    y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "power3.out",
-  });
+  gsap.fromTo(
+    card,
+    { y: 48, opacity: 0, scale: 0.96 },
+    {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      duration: 0.9,
+      ease: "power3.out",
+    },
+  );
 }
 
 onMounted(() => {
