@@ -1,7 +1,7 @@
 <!--
   VOID 统一工具浮钮
   用法：在 app.vue 挂载 <VoidToolHub />
-  主圆可拖拽并侧边吸附；点击展开三子圆（方向随边界）；AI 面板自动规避屏幕边缘
+  主圆可拖拽并侧边吸附；点击展开四个同级子圆（方向随边界）；AI 面板自动规避屏幕边缘
 -->
 <template>
   <div
@@ -30,46 +30,30 @@
         :style="orbStyle(i)"
         @click.stop="onOrbClick(orb.key)"
       >
-        <LucideIcon :name="orb.icon" :size="16" />
+        <Transition name="theme-icon" mode="out-in">
+          <LucideIcon :key="orb.icon" :name="orb.icon" :size="16" />
+        </Transition>
         <span class="tool-hub__orb-label">{{ orb.short }}</span>
       </button>
     </TransitionGroup>
 
-    <!-- 主圆：中心负责主题切换，右下角入口负责展开工具菜单 -->
-    <div
+    <!-- 主圆：拖拽、展开或收起四个同级工具入口 -->
+    <button
       class="tool-hub__fab"
-      :class="{ 'tool-hub__fab--active': menuOpen || chatOpen, 'is-light': !isDark }"
-      role="group"
-      aria-label="全局工具与主题切换"
+      :class="{ 'tool-hub__fab--active': menuOpen || chatOpen }"
+      type="button"
+      :aria-label="menuLabel"
+      :title="menuLabel"
+      @pointerdown="(e) => startDrag(e, 'fab')"
+      @pointermove="onDrag"
+      @pointerup="(e) => endDrag(e, 'fab')"
+      @pointercancel="(e) => endDrag(e, 'fab')"
     >
-      <button
-        class="tool-hub__theme"
-        type="button"
-        :aria-label="themeLabel"
-        :title="themeLabel"
-        @pointerdown="(e) => startDrag(e, 'theme')"
-        @pointermove="onDrag"
-        @pointerup="(e) => endDrag(e, 'theme')"
-        @pointercancel="(e) => endDrag(e, 'theme')"
-      >
-        <Transition name="theme-icon" mode="out-in">
-          <LucideIcon :key="isDark ? 'moon' : 'sun'" :name="isDark ? 'moon' : 'sun'" :size="20" />
-        </Transition>
-      </button>
-      <button
-        class="tool-hub__menu-trigger"
-        type="button"
-        :aria-label="menuLabel"
-        :title="menuLabel"
-        @pointerdown.stop
-        @click.stop="onFabClick"
-      >
-        <LucideIcon v-if="menuOpen || chatOpen" name="x" :size="11" />
-        <LucideIcon v-else name="layout-grid" :size="11" />
-      </button>
-    </div>
+      <LucideIcon v-if="menuOpen || chatOpen" name="x" :size="20" />
+      <LucideIcon v-else name="layout-grid" :size="20" />
+    </button>
 
-    <!-- AI 对话面板 -->
+    <!-- AI panel -->
     <Transition name="panel">
       <div v-if="chatOpen" class="tool-hub__panel" :style="panelStyle">
         <div
@@ -171,8 +155,8 @@
 <script setup lang="ts">
 import { useOrderAutomationStore } from "~/stores/orderAutomation";
 
-type OrbKey = "error" | "agent" | "ai";
-type DragSource = "theme" | "header";
+type OrbKey = "error" | "agent" | "ai" | "theme";
+type DragSource = "fab" | "header";
 
 const FAB_SIZE = 56;
 const ORB_SIZE = 48;
@@ -184,14 +168,14 @@ const PANEL_MIN_H = 280;
 
 /** 可选扇形方案（角度均为标准数学角，0° 向右、逆时针为正） */
 const FAN_PRESETS: { key: string; angles: number[] }[] = [
-  { key: "up", angles: [-150, -90, -30] },
-  { key: "up-left", angles: [180, -135, -90] },
-  { key: "up-right", angles: [-90, -45, 0] },
-  { key: "left", angles: [150, 180, -150] },
-  { key: "right", angles: [-30, 0, 30] },
-  { key: "down", angles: [30, 90, 150] },
-  { key: "down-left", angles: [90, 135, 180] },
-  { key: "down-right", angles: [0, 45, 90] },
+  { key: "up", angles: [-165, -115, -65, -15] },
+  { key: "up-left", angles: [180, -145, -110, -75] },
+  { key: "up-right", angles: [-105, -70, -35, 0] },
+  { key: "left", angles: [135, 165, -165, -135] },
+  { key: "right", angles: [-45, -15, 15, 45] },
+  { key: "down", angles: [15, 65, 115, 165] },
+  { key: "down-left", angles: [75, 110, 145, 180] },
+  { key: "down-right", angles: [0, 35, 70, 105] },
 ];
 
 const { messages, isStreaming, sendMessage, clearMessages } = useAiChat();
@@ -241,6 +225,14 @@ const orbs = computed(() => [
     short: "AI",
     icon: "bot",
     active: chatOpen.value,
+  },
+  {
+    key: "theme" as const,
+    id: undefined as string | undefined,
+    label: themeLabel.value,
+    short: "主题",
+    icon: isDark.value ? "moon" : "sun",
+    active: false,
   },
 ]);
 
@@ -510,7 +502,7 @@ function endDrag(e: PointerEvent, source: DragSource) {
     snapToEdge(pos.value.y);
     return;
   }
-  if (source === "theme") toggleTheme();
+  if (source === "fab") onFabClick();
 }
 
 /** 主圆点击：关面板 / 开关菜单 */
@@ -535,7 +527,9 @@ function onOrbClick(key: OrbKey) {
   }
   if (key === "ai") {
     chatOpen.value = true;
+    return;
   }
+  if (key === "theme") toggleTheme();
 }
 
 /** 触发 Sentry 测试错误 */
@@ -598,7 +592,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .tool-hub {
   position: fixed;
-  z-index: 1100;
+  z-index: 3500;
   width: 56px;
   height: 56px;
   touch-action: none;
@@ -613,7 +607,7 @@ onUnmounted(() => {
   &--dragging {
     transition: none;
 
-    .tool-hub__theme {
+    .tool-hub__fab {
       cursor: grabbing;
       transform: scale(.96);
     }
@@ -633,6 +627,7 @@ onUnmounted(() => {
   backdrop-filter: blur(18px);
   touch-action: none;
   user-select: none;
+  cursor: grab;
   display: grid;
   place-items: center;
   transition: box-shadow .24s ease, background-color .28s ease, border-color .24s ease;
@@ -655,53 +650,12 @@ onUnmounted(() => {
   &:hover::before { border-color: color-mix(in srgb, var(--xj-accent) 48%, transparent); }
 
   &--active {
-    border-color: var(--xj-border-strong);
-    background: var(--xj-surface-solid);
+    color: var(--xj-accent-contrast);
+    border-color: var(--xj-accent-solid);
+    background: var(--xj-accent-solid);
   }
 }
 
-.tool-hub__theme {
-  position: relative;
-  z-index: 2;
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  color: var(--xj-accent);
-  background: transparent;
-  border: 0;
-  border-radius: 50%;
-  cursor: grab;
-  touch-action: none;
-  transition: color .25s ease, transform .22s ease, background-color .25s ease;
-
-  &:hover {
-    color: var(--xj-text);
-    background: var(--xj-accent-soft);
-    transform: rotate(8deg);
-  }
-
-  &:active { cursor: grabbing; transform: scale(.94); }
-}
-
-.tool-hub__menu-trigger {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  z-index: 4;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  color: var(--xj-accent-contrast);
-  background: var(--xj-accent-solid);
-  border: 2px solid var(--xj-bg);
-  border-radius: 50%;
-  box-shadow: 0 5px 14px rgba(0, 0, 0, .2);
-  transition: transform .2s ease, filter .2s ease;
-
-  &:hover { transform: scale(1.08); filter: brightness(.96); }
-}
 
 .theme-icon-enter-active,
 .theme-icon-leave-active { transition: opacity .15s ease, transform .2s ease; }
@@ -745,6 +699,11 @@ onUnmounted(() => {
     background: var(--xj-accent-solid);
     color: var(--xj-accent-contrast);
     border-color: var(--xj-accent-solid);
+  }
+
+  &--theme {
+    color: var(--xj-accent);
+    border-color: var(--xj-border-strong);
   }
 
   &--error {

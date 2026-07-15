@@ -276,7 +276,7 @@ onMounted(fetchLogs);
 .detail-json {
   margin: 0;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--xj-surface);
   border: 1px solid var(--void-border);
   border-radius: var(--void-radius-sm);
   font-family: var(--void-mono);

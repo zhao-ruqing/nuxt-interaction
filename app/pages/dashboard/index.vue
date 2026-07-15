@@ -225,7 +225,7 @@ watch(
 .chat-suggestion-item {
   font-size: 12px;
   color: var(--void-text);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--xj-surface);
   border: 1px solid var(--void-border);
   padding: 6px 14px;
   border-radius: 100px;
@@ -235,7 +235,7 @@ watch(
     border-color 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--xj-surface-hover);
     border-color: var(--void-border-hover);
   }
 }
@@ -248,8 +248,8 @@ watch(
     justify-content: flex-end;
 
     .chat-bubble {
-      background: #fff;
-      color: #000;
+      background: var(--xj-accent-solid);
+      color: var(--xj-accent-contrast);
       border-radius: 16px 16px 4px 16px;
     }
   }
@@ -259,7 +259,7 @@ watch(
     justify-content: flex-start;
 
     .chat-bubble {
-      background: rgba(255, 255, 255, 0.06);
+      background: var(--xj-surface);
       color: var(--void-text);
       border: 1px solid var(--void-border);
       border-radius: 16px 16px 16px 4px;
@@ -289,7 +289,7 @@ watch(
   p {
     margin-top: 6px;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--xj-surface);
     border-radius: 6px;
     font-size: 12px;
   }

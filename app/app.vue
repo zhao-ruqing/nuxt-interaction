@@ -1,9 +1,11 @@
 <template>
-  <div>
-    <NuxtRouteAnnouncer />
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-    <VoidToolHub />
-  </div>
+  <ElConfigProvider :z-index="4000">
+    <div>
+      <NuxtRouteAnnouncer />
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+      <VoidToolHub />
+    </div>
+  </ElConfigProvider>
 </template>

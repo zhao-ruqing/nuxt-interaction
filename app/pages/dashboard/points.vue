@@ -39,21 +39,47 @@
 
     <el-dialog
       v-model="visible"
-      :title="editingId ? '编辑点位与围栏' : '新增地图点位'"
-      width="1180px"
-      top="5vh"
+      width="min(1260px, calc(100vw - 64px))"
+      top="3vh"
+      :z-index="5200"
+      append-to-body
       destroy-on-close
+      :show-close="false"
       class="point-dialog"
+      modal-class="point-dialog-overlay"
     >
+      <template #header>
+        <div class="point-dialog-head">
+          <div class="point-dialog-head__identity">
+            <span>{{ editingId ? 'POINT EDITOR' : 'NEW LOCATION' }}</span>
+            <div>
+              <h2>{{ editingId ? '编辑城市点位' : '新增城市点位' }}</h2>
+              <p>在地图中确定中心坐标，并为这个位置配置可验证的打卡围栏。</p>
+            </div>
+          </div>
+          <div class="point-dialog-head__position">
+            <span>GEOFENCE CENTER</span>
+            <strong>{{ Number(form.longitude).toFixed(4) }} / {{ Number(form.latitude).toFixed(4) }}</strong>
+          </div>
+          <button class="point-dialog-close" type="button" aria-label="关闭弹窗" @click="visible = false">
+            <LucideIcon name="x" :size="18" />
+          </button>
+        </div>
+      </template>
+
       <div class="point-editor">
-        <section class="point-editor__map">
+        <section class="point-editor__map-card">
+          <div class="map-card__meta">
+            <span><i />地图选点</span>
+            <strong>{{ form.checkinRadius }} M</strong>
+          </div>
           <ClientOnly>
             <XingjianPointMap
               v-if="visible"
               v-model="mapValue"
               :points="mapContextPoints"
               :editable="true"
-              height="650px"
+              height="100%"
               @address-change="handleAddressChange"
             />
             <template #fallback><div class="map-placeholder">地图加载中...</div></template>
@@ -61,43 +87,68 @@
         </section>
 
         <el-form class="point-editor__form" label-position="top">
-          <div class="editor-intro">
-            <span>MAP PICKER</span>
-            <p>点击地图或拖动中心标记调整坐标，修改半径时地图围栏会同步变化。</p>
-          </div>
-          <div class="form-grid form-grid--2">
-            <el-form-item label="所属城市">
-              <el-select v-model="form.cityId" @change="handleCityChange">
-                <el-option v-for="city in cities" :key="city.id" :label="city.name" :value="city.id" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="点位状态">
-              <el-select v-model="form.status">
-                <el-option label="已发布" value="published" /><el-option label="草稿" value="draft" /><el-option label="停用" value="disabled" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="点位名称"><el-input v-model="form.name" /></el-form-item>
-            <el-form-item label="点位编码"><el-input v-model="form.code" /></el-form-item>
-            <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
-            <el-form-item label="积分奖励"><el-input-number v-model="form.pointsReward" :min="0" /></el-form-item>
-          </div>
-
-          <div class="coordinate-box">
-            <div class="coordinate-box__title"><span>GEOFENCE</span><b>{{ form.checkinRadius }}m</b></div>
-            <el-slider v-model="form.checkinRadius" :min="50" :max="3000" :step="10" show-input />
-            <div class="coordinate-values">
-              <label>经度<strong>{{ Number(form.longitude).toFixed(6) }}</strong></label>
-              <label>纬度<strong>{{ Number(form.latitude).toFixed(6) }}</strong></label>
+          <section class="editor-section editor-section--basic">
+            <div class="editor-section__head">
+              <span>01 / BASIC INFO</span>
+              <p>点位基本信息</p>
             </div>
-          </div>
+            <div class="form-grid form-grid--2 point-basic-grid">
+              <el-form-item label="点位名称"><el-input v-model="form.name" placeholder="例如：武康大楼" /></el-form-item>
+              <el-form-item label="点位编码"><el-input v-model="form.code" placeholder="唯一英文编码" /></el-form-item>
+              <el-form-item label="所属城市">
+                <el-select v-model="form.cityId" @change="handleCityChange">
+                  <el-option v-for="city in cities" :key="city.id" :label="city.name" :value="city.id" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="点位状态">
+                <el-select v-model="form.status">
+                  <el-option label="已发布" value="published" />
+                  <el-option label="草稿" value="draft" />
+                  <el-option label="停用" value="disabled" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="点位分类"><el-input v-model="form.category" /></el-form-item>
+              <el-form-item label="积分奖励"><el-input-number v-model="form.pointsReward" :min="0" /></el-form-item>
+            </div>
+          </section>
 
-          <el-form-item label="详细地址"><el-input v-model="form.address" placeholder="地图选点后会自动解析地址，也可手动修改" /></el-form-item>
-          <el-form-item label="点位介绍"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
+          <section class="editor-section editor-section--geofence">
+            <div class="geofence-head">
+              <div>
+                <span>02 / GEOFENCE</span>
+                <p>有效打卡半径</p>
+              </div>
+              <strong>{{ form.checkinRadius }}<small>m</small></strong>
+            </div>
+            <el-slider v-model="form.checkinRadius" :min="50" :max="3000" :step="10" />
+            <div class="coordinate-values">
+              <label><span>LONGITUDE</span><strong>{{ Number(form.longitude).toFixed(6) }}</strong></label>
+              <label><span>LATITUDE</span><strong>{{ Number(form.latitude).toFixed(6) }}</strong></label>
+            </div>
+          </section>
+
+          <section class="editor-section editor-section--copy">
+            <div class="editor-section__head">
+              <span>03 / LOCATION COPY</span>
+              <p>地址与点位介绍</p>
+            </div>
+            <el-form-item label="详细地址"><el-input v-model="form.address" placeholder="地图选点后自动解析，也可手动修正" /></el-form-item>
+            <el-form-item label="点位介绍"><el-input v-model="form.description" type="textarea" :rows="2" placeholder="用一句话说明这个位置值得探索的原因" /></el-form-item>
+          </section>
         </el-form>
       </div>
+
       <template #footer>
-        <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存点位与围栏</el-button>
+        <div class="point-dialog-footer">
+          <div class="point-dialog-footer__hint">
+            <span class="sync-dot" />
+            地图坐标、围栏半径与表单实时同步
+          </div>
+          <div class="point-dialog-footer__actions">
+            <el-button @click="visible = false">取消</el-button>
+            <el-button type="primary" :loading="saving" @click="save">保存点位</el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -218,14 +269,130 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '@/styles/xingjian-admin.scss' as *;
-.header-actions { display: flex; gap: 10px; }.admin-button--ghost { color: var(--void-text); background: transparent; border: 1px solid var(--void-border); text-decoration: none; }
-.point-editor { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(360px, .8fr); gap: 20px; }
-.point-editor__map { min-width: 0; }.point-editor__form { max-height: 650px; overflow-y: auto; padding: 0 8px 0 2px; }
-.map-placeholder { height: 650px; display: grid; place-items: center; border: 1px solid var(--void-border); color: var(--void-muted); }
-.editor-intro { margin-bottom: 18px; padding: 14px; border: 1px solid rgba(244,255,88,.18); background: rgba(244,255,88,.035); }
-.editor-intro span { color: #f4ff58; font: 10px var(--void-mono); letter-spacing: .12em; }.editor-intro p { margin: 8px 0 0; color: var(--void-muted); font-size: 12px; line-height: 1.6; }
-.coordinate-box { margin-bottom: 18px; padding: 16px; border: 1px solid var(--void-border); background: rgba(255,255,255,.02); }
-.coordinate-box__title { display: flex; justify-content: space-between; margin-bottom: 12px; color: var(--void-muted); font: 10px var(--void-mono); letter-spacing: .1em; }.coordinate-box__title b { color: #f4ff58; font-size: 14px; }
-.coordinate-values { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }.coordinate-values label { color: var(--void-muted); font-size: 10px; }.coordinate-values strong { display: block; margin-top: 5px; color: var(--void-text); font: 13px var(--void-mono); }
-:deep(.point-dialog .el-dialog__body) { padding: 12px 20px; }
+
+.header-actions { display: flex; gap: 10px; }
+.admin-button--ghost { color: var(--void-text); background: transparent; border: 1px solid var(--void-border); text-decoration: none; }
+
+.point-dialog-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 42px;
+  align-items: center;
+  gap: 26px;
+}
+.point-dialog-head__identity { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.point-dialog-head__identity > span {
+  padding: 7px 9px;
+  color: var(--xj-accent);
+  border: 1px solid var(--xj-border-strong);
+  background: var(--xj-accent-soft);
+  font: 9px var(--void-mono);
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+.point-dialog-head h2 { margin: 0; color: var(--xj-text); font-size: 21px; letter-spacing: -.02em; }
+.point-dialog-head p { margin: 4px 0 0; color: var(--xj-muted); font-size: 11px; }
+.point-dialog-head__position { text-align: right; }
+.point-dialog-head__position span { display: block; margin-bottom: 5px; color: var(--xj-faint); font: 9px var(--void-mono); letter-spacing: .1em; }
+.point-dialog-head__position strong { color: var(--xj-text-soft); font: 11px var(--void-mono); }
+.point-dialog-close {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--xj-muted);
+  border: 1px solid var(--xj-border);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: .2s ease;
+}
+.point-dialog-close:hover { color: var(--xj-accent); border-color: var(--xj-border-strong); background: var(--xj-accent-soft); transform: rotate(6deg); }
+
+.point-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(430px, .8fr);
+  gap: 16px;
+  height: min(548px, calc(100vh - 184px));
+  min-width: 0;
+  overflow: hidden;
+}
+.point-editor__map-card {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--xj-border);
+  background: var(--xj-bg-elevated);
+}
+.point-editor__map-card :deep(.xj-map-shell) { border: 0; }
+.map-card__meta {
+  position: absolute;
+  z-index: 30;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 9px 12px;
+  color: var(--xj-text-soft);
+  border: 1px solid var(--xj-border);
+  background: color-mix(in srgb, var(--xj-bg-elevated) 88%, transparent);
+  backdrop-filter: blur(16px);
+  font: 10px var(--void-mono);
+}
+.map-card__meta span { display: flex; align-items: center; gap: 7px; }
+.map-card__meta i { width: 6px; height: 6px; border-radius: 50%; background: var(--xj-accent-solid); box-shadow: 0 0 10px var(--xj-accent); }
+.map-card__meta strong { color: var(--xj-accent); font-size: 11px; }
+.map-placeholder { height: 100%; display: grid; place-items: center; color: var(--xj-muted); }
+
+.point-editor__form {
+  min-width: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 10px;
+  overflow: hidden;
+}
+.editor-section {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--xj-border);
+  background: var(--xj-surface);
+}
+.editor-section__head,
+.geofence-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+.editor-section__head span,
+.geofence-head span { color: var(--xj-accent); font: 9px var(--void-mono); letter-spacing: .11em; }
+.editor-section__head p,
+.geofence-head p { margin: 0; color: var(--xj-muted); font-size: 10px; }
+.point-basic-grid { gap: 0 10px; }
+
+.geofence-head > div { display: flex; align-items: baseline; gap: 10px; }
+.geofence-head strong { color: var(--xj-text); font: 24px var(--void-mono); line-height: 1; }
+.geofence-head small { margin-left: 3px; color: var(--xj-muted); font-size: 10px; }
+.coordinate-values { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.coordinate-values label { display: flex; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid var(--xj-border); }
+.coordinate-values span { color: var(--xj-faint); font: 8px var(--void-mono); letter-spacing: .08em; }
+.coordinate-values strong { color: var(--xj-text-soft); font: 10px var(--void-mono); }
+.editor-section--copy { display: flex; flex-direction: column; }
+.editor-section--copy .editor-section__head { margin-bottom: 7px; }
+
+.point-editor__form :deep(.el-form-item) { margin-bottom: 8px; }
+.point-editor__form :deep(.el-form-item__label) { height: auto; padding-bottom: 4px; line-height: 1.15; }
+.point-editor__form :deep(.el-input__wrapper),
+.point-editor__form :deep(.el-select__wrapper),
+.point-editor__form :deep(.el-input-number) { min-height: 32px; }
+.point-editor__form :deep(.el-slider) { margin: 0 4px; }
+.point-editor__form :deep(.el-textarea__inner) { min-height: 52px !important; resize: none; }
+
+.point-dialog-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.point-dialog-footer__hint { display: flex; align-items: center; gap: 8px; color: var(--xj-muted); font-size: 10px; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--xj-success); box-shadow: 0 0 10px color-mix(in srgb, var(--xj-success) 65%, transparent); }
+.point-dialog-footer__actions { display: flex; gap: 8px; }
+
+:global(.point-dialog-overlay) { z-index: 5200 !important; overflow: hidden; }
+:global(.point-dialog) { max-height: calc(100vh - 6vh); overflow: hidden; border-radius: 16px !important; }
+:global(.point-dialog .el-dialog__header) { padding: 15px 18px; margin: 0; border-bottom: 1px solid var(--xj-border); }
+:global(.point-dialog .el-dialog__body) { padding: 14px 16px; overflow: hidden; }
+:global(.point-dialog .el-dialog__footer) { padding: 11px 16px; border-top: 1px solid var(--xj-border); }
 </style>

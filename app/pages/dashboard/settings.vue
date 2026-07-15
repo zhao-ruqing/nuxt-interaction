@@ -66,24 +66,24 @@ await load();
 }
 .setting-card {
   padding: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--xj-border);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--xj-surface);
 }
 .setting-card label {
   display: block;
-  color: #fff;
+  color: var(--xj-text);
   font-weight: 700;
 }
 .setting-card p {
   min-height: 42px;
   margin: 8px 0 18px;
-  color: rgba(255, 255, 255, 0.38);
+  color: var(--xj-muted);
   line-height: 1.5;
 }
 .setting-card code {
   display: block;
   margin-top: 16px;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--xj-faint);
 }
 </style>

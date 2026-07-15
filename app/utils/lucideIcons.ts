@@ -5,6 +5,7 @@
  */
 import type { FunctionalComponent, SVGAttributes } from "vue";
 import {
+  ArrowUpRight,
   Bot,
   Brain,
   Bug,
@@ -20,11 +21,14 @@ import {
   Leaf,
   List,
   LoaderCircle,
+  Map as MapIcon,
   MessageCircle,
   Milk,
   Moon,
+  Navigation,
   Package,
   Plus,
+  ScanLine,
   Search,
   Snowflake,
   Sparkles,
@@ -48,6 +52,7 @@ export const DEFAULT_PRODUCT_ICON = "coffee";
 
 /** kebab-case 名称 → Lucide 组件映射（按需注册，便于 tree-shaking） */
 export const iconRegistry: Record<string, LucideIconComponent> = {
+  "arrow-up-right": ArrowUpRight,
   bot: Bot,
   brain: Brain,
   bug: Bug,
@@ -62,12 +67,15 @@ export const iconRegistry: Record<string, LucideIconComponent> = {
   "layout-grid": LayoutGrid,
   leaf: Leaf,
   list: List,
+  map: MapIcon,
   "loader-circle": LoaderCircle,
   "message-circle": MessageCircle,
   milk: Milk,
   moon: Moon,
+  navigation: Navigation,
   package: Package,
   plus: Plus,
+  "scan-line": ScanLine,
   search: Search,
   snowflake: Snowflake,
   sparkles: Sparkles,

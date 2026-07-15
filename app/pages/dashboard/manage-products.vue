@@ -611,7 +611,7 @@ onMounted(async () => {
   :deep(.el-dialog__footer) {
     padding: 14px 20px 18px;
     border-top: 1px solid var(--void-border);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--xj-surface);
   }
 
   :deep(.el-form-item) {
@@ -624,7 +624,7 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--xj-surface);
   border-bottom: 1px solid var(--void-border);
 }
 
@@ -636,7 +636,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: var(--void-text);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--xj-surface);
   border-radius: var(--void-radius-sm);
   border: 1px solid var(--void-border);
 }
@@ -676,7 +676,7 @@ onMounted(async () => {
     color 0.15s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--xj-surface-hover);
     color: var(--void-text);
   }
 }
@@ -695,7 +695,7 @@ onMounted(async () => {
 .form-card {
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--xj-surface);
   border: 1px solid var(--void-border);
   border-radius: var(--void-radius-sm);
   overflow: hidden;
@@ -708,7 +708,7 @@ onMounted(async () => {
   gap: 10px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--void-border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--xj-surface);
   flex-shrink: 0;
 }
 
@@ -728,7 +728,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   border-radius: var(--void-radius-sm);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--xj-surface-hover);
   color: var(--void-text);
   font-size: 15px;
 }
@@ -746,7 +746,7 @@ onMounted(async () => {
 }
 
 .required-mark {
-  color: #ff8a8a;
+  color: var(--xj-danger);
   margin-left: 2px;
 }
 
@@ -776,8 +776,8 @@ onMounted(async () => {
   cursor: pointer;
 
   &:hover {
-    color: #ff8a8a;
-    border-color: rgba(255, 120, 120, 0.4);
+    color: var(--xj-danger);
+    border-color: color-mix(in srgb, var(--xj-danger) 45%, transparent);
   }
 }
 
@@ -812,7 +812,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: var(--void-text);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--xj-surface);
   border: 1px solid var(--void-border);
   border-radius: var(--void-radius-sm);
 }
@@ -857,7 +857,7 @@ onMounted(async () => {
   gap: 8px;
   align-items: center;
   padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--xj-surface);
   border: 1px solid var(--void-border);
   border-radius: var(--void-radius-sm);
   transition: border-color 0.15s;

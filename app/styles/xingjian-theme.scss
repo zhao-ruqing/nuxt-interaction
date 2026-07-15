@@ -417,6 +417,8 @@ body::-webkit-scrollbar-track { background: var(--xj-scroll-track); }
 .el-radio__input.is-checked .el-radio__inner { border-color: var(--xj-accent-solid); background: var(--xj-accent-solid); }
 .el-tabs__item { color: var(--xj-muted); }.el-tabs__item.is-active,.el-tabs__item:hover { color: var(--xj-accent); }.el-tabs__active-bar { background: var(--xj-accent-solid); }
 .el-message { color: var(--xj-text) !important; border-color: var(--xj-border) !important; background: var(--xj-surface-solid) !important; box-shadow: var(--xj-shadow); }
+.el-message,
+.el-notification { z-index: 6000 !important; }
 .el-loading-mask { background: color-mix(in srgb, var(--xj-bg) 76%, transparent) !important; }
 
 /* 白天模式下修正原 VOID 页面中的硬编码暗色表面 */

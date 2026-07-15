@@ -161,7 +161,7 @@ await load();
 .native-input {
   width: 100%;
   height: 32px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--xj-border);
   border-radius: 4px;
   padding: 0 10px;
 }
