@@ -70,6 +70,6 @@ const statusText: any = {
   color: rgba(255, 255, 255, 0.35);
 }
 .order-row > span {
-  color: #f4ff58;
+  color: var(--xj-accent);
 }
 </style>

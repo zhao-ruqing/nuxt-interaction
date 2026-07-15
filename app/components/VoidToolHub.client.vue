@@ -35,20 +35,39 @@
       </button>
     </TransitionGroup>
 
-    <!-- 主拖拽圆 -->
-    <button
+    <!-- 主圆：中心负责主题切换，右下角入口负责展开工具菜单 -->
+    <div
       class="tool-hub__fab"
-      :class="{ 'tool-hub__fab--active': menuOpen || chatOpen }"
-      type="button"
-      :aria-label="fabLabel"
-      @pointerdown="(e) => startDrag(e, 'fab')"
-      @pointermove="onDrag"
-      @pointerup="(e) => endDrag(e, 'fab')"
-      @pointercancel="(e) => endDrag(e, 'fab')"
+      :class="{ 'tool-hub__fab--active': menuOpen || chatOpen, 'is-light': !isDark }"
+      role="group"
+      aria-label="全局工具与主题切换"
     >
-      <LucideIcon v-if="menuOpen || chatOpen" name="x" :size="20" />
-      <LucideIcon v-else name="layout-grid" :size="20" />
-    </button>
+      <button
+        class="tool-hub__theme"
+        type="button"
+        :aria-label="themeLabel"
+        :title="themeLabel"
+        @pointerdown="(e) => startDrag(e, 'theme')"
+        @pointermove="onDrag"
+        @pointerup="(e) => endDrag(e, 'theme')"
+        @pointercancel="(e) => endDrag(e, 'theme')"
+      >
+        <Transition name="theme-icon" mode="out-in">
+          <LucideIcon :key="isDark ? 'moon' : 'sun'" :name="isDark ? 'moon' : 'sun'" :size="20" />
+        </Transition>
+      </button>
+      <button
+        class="tool-hub__menu-trigger"
+        type="button"
+        :aria-label="menuLabel"
+        :title="menuLabel"
+        @pointerdown.stop
+        @click.stop="onFabClick"
+      >
+        <LucideIcon v-if="menuOpen || chatOpen" name="x" :size="11" />
+        <LucideIcon v-else name="layout-grid" :size="11" />
+      </button>
+    </div>
 
     <!-- AI 对话面板 -->
     <Transition name="panel">
@@ -153,7 +172,7 @@
 import { useOrderAutomationStore } from "~/stores/orderAutomation";
 
 type OrbKey = "error" | "agent" | "ai";
-type DragSource = "fab" | "header";
+type DragSource = "theme" | "header";
 
 const FAB_SIZE = 56;
 const ORB_SIZE = 48;
@@ -179,6 +198,7 @@ const { messages, isStreaming, sendMessage, clearMessages } = useAiChat();
 const orderStore = useOrderAutomationStore();
 const ghostBusy = useGhostHandBusy();
 const pageAgent = usePageAgentPanel();
+const { isDark, themeLabel, toggleTheme } = useXingjianTheme();
 
 const menuOpen = ref(false);
 const chatOpen = ref(false);
@@ -231,7 +251,7 @@ const hubStyle = computed(() => ({
   top: `${pos.value.y}px`,
 }));
 
-const fabLabel = computed(() => {
+const menuLabel = computed(() => {
   if (chatOpen.value) return "关闭 AI 助手";
   if (menuOpen.value) return "收起工具菜单";
   return "打开工具菜单";
@@ -490,7 +510,7 @@ function endDrag(e: PointerEvent, source: DragSource) {
     snapToEdge(pos.value.y);
     return;
   }
-  if (source === "fab") onFabClick();
+  if (source === "theme") toggleTheme();
 }
 
 /** 主圆点击：关面板 / 开关菜单 */
@@ -593,9 +613,9 @@ onUnmounted(() => {
   &--dragging {
     transition: none;
 
-    .tool-hub__fab {
+    .tool-hub__theme {
       cursor: grabbing;
-      transform: none;
+      transform: scale(.96);
     }
   }
 }
@@ -607,35 +627,86 @@ onUnmounted(() => {
   height: 56px;
   border-radius: 50%;
   border: 1px solid var(--void-border);
-  background: rgba(8, 8, 12, 0.92);
+  background: color-mix(in srgb, var(--xj-bg-elevated) 92%, transparent);
   color: var(--void-text);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px);
-  cursor: grab;
+  box-shadow: var(--xj-shadow);
+  backdrop-filter: blur(18px);
   touch-action: none;
   user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s,
-    background 0.2s,
-    border-color 0.2s,
-    color 0.2s;
+  display: grid;
+  place-items: center;
+  transition: box-shadow .24s ease, background-color .28s ease, border-color .24s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--xj-accent) 24%, transparent);
+    pointer-events: none;
+    transition: border-color .25s ease, transform .25s ease;
+  }
 
   &:hover {
-    transform: scale(1.06);
     border-color: var(--void-border-hover);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 12px 42px color-mix(in srgb, var(--xj-accent) 14%, transparent);
   }
 
+  &:hover::before { border-color: color-mix(in srgb, var(--xj-accent) 48%, transparent); }
+
   &--active {
-    background: #fff;
-    color: #000;
-    border-color: #fff;
+    border-color: var(--xj-border-strong);
+    background: var(--xj-surface-solid);
   }
 }
+
+.tool-hub__theme {
+  position: relative;
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--xj-accent);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: grab;
+  touch-action: none;
+  transition: color .25s ease, transform .22s ease, background-color .25s ease;
+
+  &:hover {
+    color: var(--xj-text);
+    background: var(--xj-accent-soft);
+    transform: rotate(8deg);
+  }
+
+  &:active { cursor: grabbing; transform: scale(.94); }
+}
+
+.tool-hub__menu-trigger {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  z-index: 4;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--xj-accent-contrast);
+  background: var(--xj-accent-solid);
+  border: 2px solid var(--xj-bg);
+  border-radius: 50%;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, .2);
+  transition: transform .2s ease, filter .2s ease;
+
+  &:hover { transform: scale(1.08); filter: brightness(.96); }
+}
+
+.theme-icon-enter-active,
+.theme-icon-leave-active { transition: opacity .15s ease, transform .2s ease; }
+.theme-icon-enter-from { opacity: 0; transform: rotate(-35deg) scale(.72); }
+.theme-icon-leave-to { opacity: 0; transform: rotate(35deg) scale(.72); }
 
 .tool-hub__orb {
   position: absolute;
@@ -644,7 +715,7 @@ onUnmounted(() => {
   height: 48px;
   border-radius: 50%;
   border: 1px solid var(--void-border);
-  background: rgba(8, 8, 12, 0.92);
+  background: color-mix(in srgb, var(--xj-bg-elevated) 92%, transparent);
   color: var(--void-text);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(16px);
@@ -667,13 +738,13 @@ onUnmounted(() => {
 
   &:hover {
     border-color: var(--void-border-hover);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--xj-accent-soft);
   }
 
   &--active {
-    background: #fff;
-    color: #000;
-    border-color: #fff;
+    background: var(--xj-accent-solid);
+    color: var(--xj-accent-contrast);
+    border-color: var(--xj-accent-solid);
   }
 
   &--error {
@@ -788,7 +859,7 @@ onUnmounted(() => {
     border-color 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--xj-accent-soft);
     color: var(--void-text);
     border-color: var(--void-border-hover);
   }
@@ -847,8 +918,8 @@ onUnmounted(() => {
     justify-content: flex-end;
 
     .tool-hub__bubble {
-      background: #fff;
-      color: #000;
+      background: var(--xj-accent-solid);
+      color: var(--xj-accent-contrast);
       border-radius: 16px 16px 4px 16px;
     }
   }
@@ -1005,8 +1076,8 @@ onUnmounted(() => {
 .tool-hub__send {
   align-self: flex-end;
   padding: 10px 18px;
-  background: #fff;
-  color: #000;
+  background: var(--xj-accent-solid);
+  color: var(--xj-accent-contrast);
   border: none;
   border-radius: 100px;
   font-size: 13px;

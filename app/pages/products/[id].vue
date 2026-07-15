@@ -1,7 +1,7 @@
 <template>
   <VoidShell>
     <header class="void-nav void-nav--static">
-      <NuxtLink to="/" class="void-nav__logo" data-magnetic>VOID</NuxtLink>
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>行鉴</NuxtLink>
       <nav class="void-nav__links">
         <NuxtLink to="/products" class="void-nav__link" data-magnetic>商城</NuxtLink>
         <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic>登录</NuxtLink>
@@ -145,7 +145,7 @@ const currentPrice = computed(() => {
 })
 
 useHead({
-  title: computed(() => product.value ? `${product.value.name} — VOID` : '商品详情 — VOID'),
+  title: computed(() => product.value ? `${product.value.name} — 行鉴` : '商品详情 — 行鉴'),
   link: [
     {
       rel: 'stylesheet',

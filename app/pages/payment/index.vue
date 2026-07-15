@@ -1,7 +1,7 @@
 <template>
   <VoidShell>
     <header class="void-nav void-nav--static">
-      <NuxtLink to="/" class="void-nav__logo" data-magnetic>VOID</NuxtLink>
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>行鉴</NuxtLink>
       <nav class="void-nav__links">
         <NuxtLink to="/products" class="void-nav__link" data-magnetic>商城</NuxtLink>
         <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic>登录</NuxtLink>
@@ -142,7 +142,7 @@ import { gsap } from 'gsap'
 definePageMeta({ layout: false })
 
 useHead({
-  title: '确认支付 — VOID',
+  title: '确认支付 — 行鉴',
   link: [
     {
       rel: 'stylesheet',

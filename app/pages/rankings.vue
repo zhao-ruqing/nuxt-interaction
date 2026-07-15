@@ -16,4 +16,4 @@ const rankings = computed(() => data.value?.data || [])
 const teams = computed(() => teamData.value?.data || [])
 async function showFriendRanking() { try { friends.value = (await $fetch<any>('/api/rankings/friends')).data; tab.value = 'friend' } catch (error: any) { ElMessage.warning(error?.data?.message || '请先登录') } }
 </script>
-<style scoped>.rank{color:#f4ff58;font-family:var(--void-mono)}</style>
+<style scoped>.rank{color:var(--xj-accent);font-family:var(--void-mono)}</style>

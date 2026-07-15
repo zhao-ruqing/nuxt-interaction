@@ -68,6 +68,7 @@ const containerRef = ref<HTMLElement | null>(null)
 const loading = ref(true)
 const errorMessage = ref('')
 const { loadAmap } = useAmap()
+const { isDark } = useXingjianTheme()
 
 let AMapRef: any = null
 let map: any = null
@@ -294,7 +295,7 @@ onMounted(async () => {
       zoom: 13,
       center: fallback,
       viewMode: '2D',
-      mapStyle: 'amap://styles/darkblue',
+      mapStyle: isDark.value ? 'amap://styles/darkblue' : 'amap://styles/whitesmoke',
       showLabel: true,
     })
     map.addControl(new AMapRef.ToolBar({ position: { right: '16px', top: '72px' } }))
@@ -316,6 +317,7 @@ onMounted(async () => {
   }
 })
 
+watch(isDark, (dark) => map?.setMapStyle?.(dark ? 'amap://styles/darkblue' : 'amap://styles/whitesmoke'))
 watch(() => props.points, () => renderPoints(true), { deep: true })
 watch(() => props.selectedPointId, () => {
   renderPoints(false)
@@ -337,7 +339,7 @@ onUnmounted(() => {
   min-height: 360px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #060a10;
+  background: var(--xj-bg-elevated);
 }
 
 .xj-map-canvas { width: 100%; height: 100%; }
@@ -348,7 +350,7 @@ onUnmounted(() => {
   display: grid;
   place-items: center;
   color: rgba(255, 255, 255, 0.6);
-  background: #070a0f;
+  background: var(--xj-bg-elevated);
   z-index: 20;
 }
 .xj-map-state--error { color: #ff8a8a; }
@@ -359,7 +361,7 @@ onUnmounted(() => {
   position: absolute;
   z-index: 15;
   color: rgba(255, 255, 255, 0.78);
-  background: rgba(7, 9, 13, 0.88);
+  background: color-mix(in srgb, var(--xj-bg-elevated) 88%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.13);
   backdrop-filter: blur(16px);
 }
@@ -405,7 +407,7 @@ onUnmounted(() => {
 :deep(.amap-xj-current > span) { display: block; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #52d6ff; border: 3px solid rgba(255,255,255,.92); box-shadow: 0 5px 18px rgba(0,0,0,.5); }
 :deep(.amap-xj-marker > b),
 :deep(.amap-xj-editor > b),
-:deep(.amap-xj-current > b) { position: absolute; left: 34px; top: 5px; padding: 3px 7px; background: rgba(4,6,10,.84); border: 1px solid rgba(255,255,255,.14); font-weight: 500; }
+:deep(.amap-xj-current > b) { position: absolute; left: 34px; top: 5px; padding: 3px 7px; background: color-mix(in srgb, var(--xj-bg-elevated) 86%, transparent); border: 1px solid rgba(255,255,255,.14); font-weight: 500; }
 :deep(.amap-xj-marker.is-selected > span), :deep(.amap-xj-editor > span) { background: #f4ff58; }
 :deep(.amap-xj-marker.is-selected > b), :deep(.amap-xj-editor > b) { color: #f4ff58; }
 :deep(.amap-xj-current > span) { width: 18px; height: 18px; border-radius: 50%; transform: none; background: #ff57d2; border-width: 3px; box-shadow: 0 0 0 7px rgba(255,87,210,.18), 0 0 18px #ff57d2; }

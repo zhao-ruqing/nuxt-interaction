@@ -76,7 +76,7 @@ async function complete() {
   display: block;
   margin: 16px 0 24px;
   font-size: 48px;
-  color: #f4ff58;
+  color: var(--xj-accent);
 }
 .route-list {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -90,10 +90,10 @@ async function complete() {
 }
 .route-stop > span {
   font: 20px var(--void-mono);
-  color: #f4ff58;
+  color: var(--xj-accent);
 }
 .route-stop h2 {
-  color: #fff;
+  color: var(--xj-text);
 }
 .route-stop p {
   color: rgba(255, 255, 255, 0.38);

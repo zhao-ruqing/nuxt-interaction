@@ -30,7 +30,7 @@
 
     <!-- 顶栏 -->
     <header class="void-nav" ref="navRef">
-      <NuxtLink to="/" class="void-nav__logo">VOID</NuxtLink>
+      <NuxtLink to="/" class="void-nav__logo">行鉴</NuxtLink>
       <nav class="void-nav__links">
         <a href="#matrix" class="void-nav__link" data-magnetic>矩阵</a>
         <a href="#signal" class="void-nav__link" data-magnetic>信号</a>
@@ -189,7 +189,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 definePageMeta({ layout: false });
 
 useHead({
-  title: "VOID — 沉浸式交互体验",
+  title: "行鉴 — 城市探索与互动体验",
   link: [
     {
       rel: "stylesheet",
@@ -633,11 +633,11 @@ onUnmounted(cleanup);
 // ===== 沉浸式暗场首页 =====
 
 .void {
-  --void-bg: #030306;
-  --void-surface: rgba(255, 255, 255, 0.03);
-  --void-border: rgba(255, 255, 255, 0.08);
-  --void-text: #f2f2f2;
-  --void-muted: rgba(255, 255, 255, 0.42);
+  --void-bg: var(--xj-bg);
+  --void-surface: var(--xj-surface);
+  --void-border: var(--xj-border);
+  --void-text: var(--xj-text);
+  --void-muted: var(--xj-muted);
   --void-mono: "JetBrains Mono", monospace;
   --void-display: "Syne", system-ui, sans-serif;
 
@@ -1413,8 +1413,8 @@ onUnmounted(cleanup);
 <style lang="scss">
 // 自定义光标仅首页启用（void-home-cursor 标记，避免影响其他 VOID 页）
 body.void-body.void-home-cursor {
-  background: #030306;
-  color: #f2f2f2;
+  background: var(--xj-bg);
+  color: var(--xj-text);
   overflow-x: hidden;
   cursor: none;
 
@@ -1424,7 +1424,7 @@ body.void-body.void-home-cursor {
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: #f2f2f2;
+    color: var(--xj-text);
   }
 }
 

@@ -7,7 +7,7 @@
     </div>
 
     <aside class="void-dash-sidebar">
-      <NuxtLink to="/dashboard" class="void-dash-sidebar__logo">VOID</NuxtLink>
+      <NuxtLink to="/dashboard" class="void-dash-sidebar__logo">行鉴</NuxtLink>
       <nav class="void-dash-sidebar__nav">
         <NuxtLink
           to="/dashboard"

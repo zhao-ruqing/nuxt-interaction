@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   },
 
   // 全局样式（仅引入一次）
-  css: ["@/styles/reset.scss", "@/styles/global.scss", "@/styles/void.scss"],
+  css: ["@/styles/reset.scss", "@/styles/global.scss", "@/styles/void.scss", "@/styles/xingjian-theme.scss"],
 
   // 配置 Vite 插件
   // 通过 additionalData 注入变量和 mixins，所有组件 SCSS 可直接使用
@@ -46,6 +46,15 @@ export default defineNuxtConfig({
   // 客户端 Source Map（配合 sentry 上传）
   sourcemap: { client: "hidden" },
 
+  // 在首屏样式计算前应用已保存主题，避免白天模式刷新时出现暗色闪烁
+  app: {
+    head: {
+      script: [{
+        innerHTML: "(()=>{try{const s=localStorage.getItem('xingjian-theme');const t=s==='light'||s==='dark'?s:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.dataset.theme=t;document.documentElement.classList.toggle('dark',t==='dark');document.documentElement.style.colorScheme=t}catch{}})()",
+        tagPosition: "head",
+      }],
+    },
+  },
   // 运行时全局变量
   runtimeConfig: {
     count: 0, // 写在外面的是服务端的变量,在客户端是访问不到的

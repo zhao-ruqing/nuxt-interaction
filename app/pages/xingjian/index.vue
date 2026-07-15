@@ -48,8 +48,8 @@ const pointTotal = computed(() => cities.value.reduce((sum: number, city: any) =
 </script>
 
 <style scoped lang="scss">
-.xj-hero { min-height: 560px; display: grid; grid-template-columns: 1.2fr .8fr; align-items: center; border-bottom: 1px solid rgba(255,255,255,.08); }
-.hero-orbit { width: 390px; height: 390px; justify-self: end; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; position: relative; font: 11px var(--void-mono); color: rgba(255,255,255,.35); }
-.hero-orbit strong { font-size: 74px; color: #f4ff58; }.hero-orbit__ring { position: absolute; inset: 35px; border: 1px dashed rgba(244,255,88,.3); border-radius: 50%; }.hero-orbit__ring--small { inset: 90px; }
-.overview { display: grid; grid-template-columns: repeat(4,1fr); border-bottom: 1px solid rgba(255,255,255,.08); }.overview div { padding: 34px; border-right: 1px solid rgba(255,255,255,.08); }.overview strong { display:block;font-size:38px;color:#f4ff58 }.overview span { color:rgba(255,255,255,.38);font-size:12px }.xj-section { padding-top: 70px; }.xj-section .xj-grid { margin-top: 24px; }
+.xj-hero { min-height: 560px; display: grid; grid-template-columns: 1.2fr .8fr; align-items: center; border-bottom: 1px solid var(--xj-border); }
+.hero-orbit { width: 390px; height: 390px; justify-self: end; border: 1px solid var(--xj-border); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; position: relative; font: 11px var(--void-mono); color: var(--xj-muted); }
+.hero-orbit strong { font-size: 74px; color: var(--xj-accent); }.hero-orbit__ring { position: absolute; inset: 35px; border: 1px dashed rgba(244,255,88,.3); border-radius: 50%; }.hero-orbit__ring--small { inset: 90px; }
+.overview { display: grid; grid-template-columns: repeat(4,1fr); border-bottom: 1px solid var(--xj-border); }.overview div { padding: 34px; border-right: 1px solid var(--xj-border); }.overview strong { display:block;font-size:38px;color:var(--xj-accent) }.overview span { color:var(--xj-muted);font-size:12px }.xj-section { padding-top: 70px; }.xj-section .xj-grid { margin-top: 24px; }
 </style>
