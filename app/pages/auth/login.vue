@@ -57,6 +57,7 @@
 <script setup lang="ts">
 import type { FormInstance, FormRules } from "element-plus";
 import { gsap } from "gsap";
+import { defaultPostLoginPath, resolveAuthRedirect } from "~/utils/authRedirect";
 
 definePageMeta({ layout: false });
 
@@ -70,6 +71,8 @@ useHead({
   ],
 });
 
+const route = useRoute();
+const userStore = useUserStore();
 const form = reactive({ username: "", password: "" });
 const loading = ref(false);
 const formRef = ref<FormInstance>();
@@ -79,6 +82,25 @@ const rules: FormRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 };
+
+/** 计算登录成功后的落地路径（优先安全 redirect） */
+function resolveLandingPath(role?: string) {
+  const redirect = resolveAuthRedirect(route.query.redirect);
+  if (redirect) {
+    // 非管理员不允许回跳到后台
+    if (redirect.startsWith("/dashboard") && role !== "admin") {
+      return defaultPostLoginPath(role);
+    }
+    return redirect;
+  }
+  return defaultPostLoginPath(role);
+}
+
+/** 已登录访问登录页时直接进入落地页 */
+async function redirectIfAuthenticated() {
+  const ok = userStore.isLoggedIn || await userStore.fetchUser();
+  if (ok) await navigateTo(resolveLandingPath(userStore.user?.role));
+}
 
 /** 提交登录表单 */
 async function handleLogin() {
@@ -90,8 +112,9 @@ async function handleLogin() {
     const { post } = useApi();
     const res = await post<any>("/api/auth/login", form);
     if (res.success) {
+      userStore.setUser(res.user);
       ElMessage.success("登录成功");
-      window.location.href = res.user?.role === "admin" ? "/dashboard" : "/xingjian";
+      await navigateTo(resolveLandingPath(res.user?.role));
     } else {
       ElMessage.error(res.message);
     }
@@ -110,6 +133,8 @@ function playEnterAnimation() {
     y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "power3.out",
   });
 }
+
+await redirectIfAuthenticated();
 
 onMounted(() => {
   nextTick(playEnterAnimation);

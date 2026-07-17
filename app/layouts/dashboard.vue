@@ -136,8 +136,8 @@ onUnmounted(() => {
 
 /** 退出登录并返回首页 */
 async function handleLogout() {
-  await useFetch("/api/auth/logout", { method: "POST" });
-  userStore.clearUser();
-  navigateTo("/");
+  await userStore.logout();
+  ElMessage.success("已退出登录");
+  await navigateTo("/");
 }
 </script>

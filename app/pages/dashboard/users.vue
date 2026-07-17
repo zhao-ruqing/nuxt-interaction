@@ -49,7 +49,7 @@
   </div>
 </template>
 <script setup lang="ts">
-definePageMeta({ layout: "dashboard", middleware: "admin" });
+definePageMeta({ layout: "dashboard" });
 const items = ref<any[]>([]);
 async function load() {
   items.value = (await $fetch<any>("/api/admin/users")).data;

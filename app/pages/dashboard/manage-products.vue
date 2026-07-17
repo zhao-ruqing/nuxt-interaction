@@ -404,7 +404,6 @@ import { DEFAULT_PRODUCT_ICON } from "~/utils/lucideIcons";
 
 definePageMeta({
   layout: "dashboard",
-  middleware: "auth",
 });
 
 const loading = ref(false);

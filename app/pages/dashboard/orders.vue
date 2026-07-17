@@ -52,7 +52,7 @@
   </div>
 </template>
 <script setup lang="ts">
-definePageMeta({ layout: "dashboard", middleware: "auth" });
+definePageMeta({ layout: "dashboard" });
 const items = ref<any[]>([]);
 const statusText: any = {
   paid: "待发货",

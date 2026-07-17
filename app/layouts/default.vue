@@ -7,8 +7,8 @@
           <NuxtLink to="/">首页</NuxtLink>
           <NuxtLink to="/xingjian">行鉴</NuxtLink>
           <NuxtLink to="/products">饮品商城</NuxtLink>
-          <NuxtLink to="/auth/login">登录</NuxtLink>
-          <NuxtLink to="/auth/register" class="btn-register">注册</NuxtLink>
+          <AuthAccountLinks variant="xingjian" />
+          <NuxtLink v-if="!userStore.isLoggedIn" to="/auth/register" class="btn-register">注册</NuxtLink>
         </nav>
       </div>
     </header>
@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+const userStore = useUserStore();
 const isScrolled = ref(false);
 
 function onScroll() {

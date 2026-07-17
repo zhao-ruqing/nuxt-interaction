@@ -98,7 +98,7 @@
   </div>
 </template>
 <script setup lang="ts">
-definePageMeta({ layout: "dashboard", middleware: "auth" });
+definePageMeta({ layout: "dashboard" });
 const items = ref<any[]>([]),
   cities = ref<any[]>([]),
   points = ref<any[]>([]),

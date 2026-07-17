@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'dashboard', middleware: 'admin' })
+definePageMeta({ layout: 'dashboard' })
 
 const route = useRoute()
 const router = useRouter()

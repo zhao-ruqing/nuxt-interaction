@@ -17,9 +17,7 @@
         <NuxtLink to="/products">饮品商城</NuxtLink>
       </nav>
       <div class="xj-nav__account">
-        <NuxtLink v-if="userStore.isLoggedIn" to="/profile">{{ userStore.user?.username }}</NuxtLink>
-        <NuxtLink v-else to="/auth/login">登录</NuxtLink>
-        <NuxtLink v-if="userStore.user?.role === 'admin'" to="/dashboard" class="xj-nav__console">控制台</NuxtLink>
+        <AuthAccountLinks variant="xingjian" />
       </div>
     </header>
     <main class="xj-main"><slot /></main>
@@ -31,8 +29,6 @@
 </template>
 
 <script setup lang="ts">
-const userStore = useUserStore()
-onMounted(() => userStore.fetchUser())
 useHead({
   bodyAttrs: { class: 'void-body' },
   link: [{ rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap' }],
@@ -76,8 +72,7 @@ useHead({
 .xj-nav__links { display: flex; justify-content: center; gap: 30px; color: var(--xj-muted); font-size: 14px; }
 .xj-nav__links a { transition: color .2s ease; }
 .xj-nav__links a.router-link-active, .xj-nav__links a:hover { color: var(--xj-accent); }
-.xj-nav__account { display: flex; align-items: center; justify-content: flex-end; gap: 18px; color: var(--xj-text-soft); font: 12px var(--void-mono); }
-.xj-nav__console { padding: 9px 14px; border: 1px solid var(--xj-border); border-radius: 99px; }
+.xj-nav__account { display: flex; align-items: center; justify-content: flex-end; color: var(--xj-text-soft); font: 12px var(--void-mono); }
 .xj-main { position: relative; z-index: 2; min-height: calc(100vh - 150px); }
 .xj-footer { position: relative; z-index: 2; display: flex; justify-content: space-between; padding: 26px 42px; color: var(--xj-muted); border-top: 1px solid var(--xj-border); font: 11px var(--void-mono); letter-spacing: .08em; }
 .xj-page { max-width: 1320px; margin: 0 auto; padding: 64px 48px 96px; }

@@ -29,7 +29,7 @@
   </div>
 </template>
 <script setup lang="ts">
-definePageMeta({ layout: "dashboard", middleware: "admin" });
+definePageMeta({ layout: "dashboard" });
 const settings = ref<any[]>([]);
 const values = reactive<Record<string, any>>({});
 async function load() {

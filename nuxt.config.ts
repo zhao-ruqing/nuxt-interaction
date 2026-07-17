@@ -6,15 +6,22 @@ export default defineNuxtConfig({
     enabled: true,
   },
 
+  // 开发服务器监听所有网卡，允许局域网内其他设备访问
+  devServer: {
+    host: "0.0.0.0",
+    port: 3000,
+  },
+
   // 全局样式（仅引入一次）
   css: ["@/styles/reset.scss", "@/styles/global.scss", "@/styles/void.scss", "@/styles/xingjian-theme.scss"],
 
   // 配置 Vite 插件
   // 通过 additionalData 注入变量和 mixins，所有组件 SCSS 可直接使用
   vite: {
-    // 启动 dev server 后自动打开浏览器
+    // 启动后打开浏览器；host 同步开放局域网，便于热更新穿透
     server: {
       open: true,
+      host: true,
     },
     // 预构建 CJS 依赖，避免运行时发现新依赖导致页面重载
     optimizeDeps: {

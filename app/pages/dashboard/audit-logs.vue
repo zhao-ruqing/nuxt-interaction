@@ -157,7 +157,6 @@ import { canShowDiff } from "~/utils/auditDiff";
 
 definePageMeta({
   layout: "dashboard",
-  middleware: "auth",
 });
 
 const loading = ref(false);

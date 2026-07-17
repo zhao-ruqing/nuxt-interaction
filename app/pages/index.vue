@@ -20,7 +20,7 @@
         <NuxtLink to="/products">饮品商城</NuxtLink>
       </nav>
       <div class="home-nav__actions">
-        <NuxtLink to="/auth/login" class="home-nav__login">登录</NuxtLink>
+        <AuthAccountLinks variant="home" />
         <NuxtLink to="/checkins" class="home-nav__start">开始探索 <span>↗</span></NuxtLink>
       </div>
     </header>

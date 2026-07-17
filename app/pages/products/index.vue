@@ -4,7 +4,8 @@
       <NuxtLink to="/" class="void-nav__logo" data-magnetic>行鉴</NuxtLink>
       <nav class="void-nav__links">
         <NuxtLink to="/" class="void-nav__link" data-magnetic>首页</NuxtLink>
-        <NuxtLink to="/auth/login" class="void-nav__cta" data-magnetic>登录</NuxtLink>
+        <NuxtLink to="/xingjian" class="void-nav__link" data-magnetic>行鉴</NuxtLink>
+        <AuthAccountLinks variant="void" />
       </nav>
     </header>
 

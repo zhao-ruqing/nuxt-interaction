@@ -35,7 +35,6 @@ const PERSONALITY_URL = "https://www.16personalities.com/zh";
 
 definePageMeta({
   layout: "dashboard",
-  middleware: "auth",
 });
 
 /** 在新窗口打开测试页 */
