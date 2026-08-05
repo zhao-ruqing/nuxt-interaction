@@ -1,5 +1,10 @@
 import { togglePageAgentPanel } from '~/utils/pageAgentPanel.client'
+import {
+  getPageAgentPageInstructions,
+  PAGE_AGENT_SYSTEM_INSTRUCTIONS,
+} from '~/utils/pageAgentInstructions.client'
 import { initPageAgentState } from '~/utils/pageAgentState.client'
+import { createPageAgentCustomTools } from '~/utils/pageAgentTools.client'
 
 export default defineNuxtPlugin({
   name: 'page-agent',
@@ -22,8 +27,9 @@ export default defineNuxtPlugin({
       baseURL: config.baseURL,
       model: config.model,
       apiKey: config.apiKey,
-      temperature: 0.7,
-      maxRetries: 2,
+      // 工具调用场景略降温度，减少把参数名误当成 action
+      temperature: 0.2,
+      maxRetries: 3,
 
       // Agent 行为配置
       language: 'zh-CN',
@@ -35,6 +41,24 @@ export default defineNuxtPlugin({
 
       // 任务完成后自动显示输入框
       promptForNextTask: true,
+
+      // 业务指引：全局 + 按路由动态注入
+      instructions: {
+        system: PAGE_AGENT_SYSTEM_INSTRUCTIONS,
+        getPageInstructions: getPageAgentPageInstructions,
+      },
+
+      // 站内导航 / 搜索等业务工具
+      customTools: createPageAgentCustomTools(),
+
+      // 任务结束后打日志，便于演示时观察
+      onAfterTask: (_agent, result) => {
+        console.info(
+          '[page-agent] 任务结束',
+          result.success ? '成功' : '失败',
+          result.data,
+        )
+      },
     })
 
     // 面板默认隐藏，通过顶部按钮或快捷键显式打开

@@ -1,7 +1,7 @@
 <!--
   VOID 统一工具浮钮
   用法：在 app.vue 挂载 <VoidToolHub />
-  主圆可拖拽并侧边吸附；点击展开四个同级子圆（方向随边界）；AI 面板自动规避屏幕边缘
+  主圆可拖拽并侧边吸附；点击展开子圆；AI 面板 / 页面助手快捷任务自动规避屏幕边缘
 -->
 <template>
   <div
@@ -40,7 +40,7 @@
     <!-- 主圆：拖拽、展开或收起四个同级工具入口 -->
     <button
       class="tool-hub__fab"
-      :class="{ 'tool-hub__fab--active': menuOpen || chatOpen }"
+      :class="{ 'tool-hub__fab--active': menuOpen || chatOpen || agentAssistOpen }"
       type="button"
       :aria-label="menuLabel"
       :title="menuLabel"
@@ -49,9 +49,68 @@
       @pointerup="(e) => endDrag(e, 'fab')"
       @pointercancel="(e) => endDrag(e, 'fab')"
     >
-      <LucideIcon v-if="menuOpen || chatOpen" name="x" :size="20" />
+      <LucideIcon v-if="menuOpen || chatOpen || agentAssistOpen" name="x" :size="20" />
       <LucideIcon v-else name="layout-grid" :size="20" />
     </button>
+
+    <!-- Page Agent 快捷任务面板 -->
+    <Transition name="panel">
+      <div
+        v-if="agentAssistOpen"
+        class="tool-hub__panel tool-hub__panel--agent"
+        :style="agentPanelStyle"
+      >
+        <div
+          class="tool-hub__panel-header"
+          @pointerdown="(e) => startDrag(e, 'header')"
+          @pointermove="onDrag"
+          @pointerup="(e) => endDrag(e, 'header')"
+          @pointercancel="(e) => endDrag(e, 'header')"
+        >
+          <div class="tool-hub__panel-info">
+            <LucideIcon
+              name="sparkles"
+              :size="18"
+              class="tool-hub__panel-icon"
+            />
+            <div>
+              <h3>页面助手</h3>
+              <p>{{ agentStatusHint }}</p>
+            </div>
+          </div>
+          <button
+            v-if="agentRunning"
+            class="tool-hub__clear"
+            type="button"
+            title="停止任务"
+            @pointerdown.stop
+            @click="stopAgentTask"
+          >
+            停止
+          </button>
+        </div>
+
+        <div class="tool-hub__agent-body">
+          <p class="tool-hub__agent-tip">
+            点下方快捷任务，或在底部 Agent 面板里自由输入。站内跳转会走自定义工具。
+          </p>
+          <div class="tool-hub__prompts">
+            <button
+              v-for="item in pageAgent.quickTasks"
+              :key="item.label"
+              type="button"
+              :disabled="agentRunning"
+              @click="runAgentTask(item.task)"
+            >
+              {{ item.label }}
+            </button>
+          </div>
+          <p v-if="pageAgent.lastSummary.value" class="tool-hub__agent-summary">
+            {{ pageAgent.lastSummary.value }}
+          </p>
+        </div>
+      </div>
+    </Transition>
 
     <!-- AI panel -->
     <Transition name="panel">
@@ -165,6 +224,7 @@ const PANEL_GAP = 14;
 const PANEL_IDEAL_W = 380;
 const PANEL_IDEAL_H = 520;
 const PANEL_MIN_H = 280;
+const AGENT_PANEL_H = 320;
 
 /** 可选扇形方案（角度均为标准数学角，0° 向右、逆时针为正） */
 const FAN_PRESETS: { key: string; angles: number[] }[] = [
@@ -186,9 +246,18 @@ const { isDark, themeLabel, toggleTheme } = useXingjianTheme();
 
 const menuOpen = ref(false);
 const chatOpen = ref(false);
+/** 页面助手快捷任务面板（与官方 Agent 底部面板联动） */
+const agentAssistOpen = ref(false);
 const inputText = ref("");
 const messageListRef = ref<HTMLElement>();
 const hubRef = ref<HTMLElement>();
+
+const agentRunning = computed(() => pageAgent.status.value === "running");
+const agentStatusHint = computed(() => {
+  if (agentRunning.value) return "正在执行页面任务…";
+  if (pageAgent.lastSummary.value) return "可继续点快捷任务或底部输入";
+  return "选快捷任务，或 Ctrl+Shift+P";
+});
 
 const pos = ref({ x: 0, y: 0 });
 const isDragging = ref(false);
@@ -216,7 +285,7 @@ const orbs = computed(() => [
     label: "页面助手",
     short: "助手",
     icon: "sparkles",
-    active: pageAgent.isOpen.value,
+    active: pageAgent.isOpen.value || agentAssistOpen.value,
   },
   {
     key: "ai" as const,
@@ -245,6 +314,7 @@ const hubStyle = computed(() => ({
 
 const menuLabel = computed(() => {
   if (chatOpen.value) return "关闭 AI 助手";
+  if (agentAssistOpen.value) return "关闭页面助手";
   if (menuOpen.value) return "收起工具菜单";
   return "打开工具菜单";
 });
@@ -362,9 +432,15 @@ const fanAngles = computed(() => {
 });
 
 /** AI 面板相对主圆的定位与尺寸 */
-const panelStyle = computed(() => {
+const panelStyle = computed(() => computeHubPanelStyle(PANEL_IDEAL_H));
+
+/** 页面助手快捷面板定位（更矮） */
+const agentPanelStyle = computed(() => computeHubPanelStyle(AGENT_PANEL_H));
+
+/** 计算浮钮旁弹出面板的尺寸与相对坐标 */
+function computeHubPanelStyle(idealHeight: number) {
   if (!import.meta.client) {
-    return { width: `${PANEL_IDEAL_W}px`, height: `${PANEL_IDEAL_H}px` };
+    return { width: `${PANEL_IDEAL_W}px`, height: `${idealHeight}px` };
   }
 
   const margin = getEdgeMargin();
@@ -374,26 +450,27 @@ const panelStyle = computed(() => {
   const fabTop = pos.value.y;
   const fabRight = fabLeft + FAB_SIZE;
   const fabBottom = fabTop + FAB_SIZE;
+  const minH = Math.min(PANEL_MIN_H, idealHeight);
 
   const pw = Math.min(PANEL_IDEAL_W, Math.max(260, vw - margin * 2));
   const spaceAbove = fabTop - margin;
   const spaceBelow = vh - fabBottom - margin;
 
-  let ph = Math.min(PANEL_IDEAL_H, vh - margin * 2);
+  let ph = Math.min(idealHeight, vh - margin * 2);
   let absTop = margin;
   let absLeft = margin;
 
-  const canAbove = spaceAbove >= PANEL_MIN_H + PANEL_GAP;
-  const canBelow = spaceBelow >= PANEL_MIN_H + PANEL_GAP;
+  const canAbove = spaceAbove >= minH + PANEL_GAP;
+  const canBelow = spaceBelow >= minH + PANEL_GAP;
 
   if (canAbove && (spaceAbove >= spaceBelow || !canBelow)) {
-    ph = Math.min(PANEL_IDEAL_H, spaceAbove - PANEL_GAP);
+    ph = Math.min(idealHeight, spaceAbove - PANEL_GAP);
     absTop = fabTop - PANEL_GAP - ph;
   } else if (canBelow) {
-    ph = Math.min(PANEL_IDEAL_H, spaceBelow - PANEL_GAP);
+    ph = Math.min(idealHeight, spaceBelow - PANEL_GAP);
     absTop = fabBottom + PANEL_GAP;
   } else {
-    ph = Math.min(PANEL_IDEAL_H, vh - margin * 2);
+    ph = Math.min(idealHeight, vh - margin * 2);
     absTop = Math.max(margin, Math.min((vh - ph) / 2, vh - margin - ph));
   }
 
@@ -410,7 +487,7 @@ const panelStyle = computed(() => {
     right: "auto",
     bottom: "auto",
   };
-});
+}
 
 /** 子圆用 left/top 定位，避免与入场 transform 动画冲突 */
 function orbStyle(index: number) {
@@ -511,7 +588,24 @@ function onFabClick() {
     chatOpen.value = false;
     return;
   }
+  if (agentAssistOpen.value) {
+    closeAgentAssist();
+    return;
+  }
   menuOpen.value = !menuOpen.value;
+}
+
+/** 打开页面助手：官方底部面板 + 快捷任务 */
+function openAgentAssist() {
+  chatOpen.value = false;
+  agentAssistOpen.value = true;
+  pageAgent.show();
+}
+
+/** 关闭页面助手快捷面板，并隐藏官方面板 */
+function closeAgentAssist() {
+  agentAssistOpen.value = false;
+  if (pageAgent.isVisible()) pageAgent.hide();
 }
 
 /** 子圆点击分发操作 */
@@ -522,14 +616,40 @@ function onOrbClick(key: OrbKey) {
     return;
   }
   if (key === "agent") {
-    pageAgent.toggle();
+    if (agentAssistOpen.value || pageAgent.isOpen.value) {
+      closeAgentAssist();
+    } else {
+      openAgentAssist();
+    }
     return;
   }
   if (key === "ai") {
+    agentAssistOpen.value = false;
     chatOpen.value = true;
     return;
   }
   if (key === "theme") toggleTheme();
+}
+
+/** 执行 Page Agent 快捷任务 */
+async function runAgentTask(task: string) {
+  try {
+    agentAssistOpen.value = true;
+    await pageAgent.run(task);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "页面助手执行失败";
+    ElMessage.error(message);
+  }
+}
+
+/** 停止 Page Agent 当前任务 */
+async function stopAgentTask() {
+  try {
+    await pageAgent.stop();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "停止失败";
+    ElMessage.error(message);
+  }
 }
 
 /** 触发 Sentry 测试错误 */
@@ -571,13 +691,26 @@ watch(
   { deep: true },
 );
 
-/** 幽灵手启动时收起 AI 面板与菜单 */
+/** 幽灵手启动时收起 AI / 助手面板与菜单 */
 watch(ghostBusy, (busy) => {
   if (busy) {
     chatOpen.value = false;
+    agentAssistOpen.value = false;
     menuOpen.value = false;
   }
 });
+
+/** 官方面板开关时同步快捷任务面板（含 Ctrl+Shift+P） */
+watch(
+  () => pageAgent.isOpen.value,
+  (open) => {
+    if (!open) {
+      agentAssistOpen.value = false;
+      return;
+    }
+    if (!chatOpen.value) agentAssistOpen.value = true;
+  },
+);
 
 onMounted(() => {
   nextTick(initPosition);
@@ -862,10 +995,45 @@ onUnmounted(() => {
     cursor: pointer;
     transition: all 0.2s;
 
-    &:hover {
+    &:hover:not(:disabled) {
       border-color: var(--void-border-hover);
       background: rgba(255, 255, 255, 0.08);
     }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.tool-hub__panel--agent {
+  .tool-hub__agent-body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px 18px 20px;
+  }
+
+  .tool-hub__agent-tip {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--void-muted);
+  }
+
+  .tool-hub__prompts {
+    margin-top: 14px;
+  }
+
+  .tool-hub__agent-summary {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--void-border);
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--void-text);
   }
 }
 

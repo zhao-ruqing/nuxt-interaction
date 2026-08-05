@@ -50,6 +50,9 @@ importers:
       vue-router:
         specifier: ^5.1.0
         version: 5.1.0(@vue/compiler-sfc@3.5.38)(esbuild@0.28.1)(pinia@3.0.4(vue@3.5.38))(rollup@4.62.2)(vite@7.3.5(@types/node@26.0.0)(jiti@2.7.0)(sass@1.101.0)(terser@5.48.0)(yaml@2.9.0))(vue@3.5.38)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@element-plus/nuxt':
         specifier: ^1.1.5

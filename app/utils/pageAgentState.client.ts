@@ -4,6 +4,12 @@ import {
   PAGE_AGENT_PANEL_CLOSED_EVENT,
   setPageAgentPanelOpen,
 } from '~/utils/pageAgentPanelState'
+import {
+  setPageAgentLastSummary,
+  summarizeExecutionResult,
+  syncPageAgentStatus,
+} from '~/utils/pageAgentRuntimeState'
+import { installPageAgentToolAliases } from '~/utils/pageAgentTools.client'
 
 export type PageAgentCreateConfig = ConstructorParameters<typeof PageAgent>[0]
 
@@ -23,11 +29,16 @@ export function isPanelDomVisible(agent: PageAgent): boolean {
   return wrapper.style.display !== 'none'
 }
 
+/** 绑定 Agent 生命周期与状态事件 */
 function bindAgentEvents(agent: PageAgent) {
+  const onStatusChange = () => syncPageAgentStatus(agent)
+  agent.addEventListener('statuschange', onStatusChange)
   agent.addEventListener('dispose', () => {
     setPageAgentPanelOpen(false)
+    syncPageAgentStatus(null)
     window.dispatchEvent(new CustomEvent(PAGE_AGENT_PANEL_CLOSED_EVENT))
   })
+  syncPageAgentStatus(agent)
 }
 
 /** 创建新的 Page Agent 实例 */
@@ -37,6 +48,7 @@ export function createPageAgent(): PageAgent {
   }
 
   const agent = new PageAgent(createConfig)
+  installPageAgentToolAliases(agent)
   bindAgentEvents(agent)
   currentAgent = agent
 
@@ -69,4 +81,33 @@ export function ensurePageAgent(): PageAgent {
     return createPageAgent()
   }
   return currentAgent
+}
+
+/**
+ * 打开面板并执行自然语言任务
+ * @param task 任务描述
+ */
+export async function runPageAgentTask(task: string) {
+  const trimmed = task.trim()
+  if (!trimmed) {
+    throw new Error('[page-agent] 任务内容不能为空')
+  }
+
+  const agent = ensurePageAgent()
+  agent.panel.show()
+  syncPageAgentPanelOpen()
+  syncPageAgentStatus(agent)
+
+  const result = await agent.execute(trimmed)
+  setPageAgentLastSummary(summarizeExecutionResult(result))
+  syncPageAgentStatus(agent)
+  return result
+}
+
+/** 停止当前正在执行的任务 */
+export async function stopPageAgentTask() {
+  const agent = getPageAgent()
+  if (!agent || agent.disposed) return
+  await agent.stop()
+  syncPageAgentStatus(agent)
 }
