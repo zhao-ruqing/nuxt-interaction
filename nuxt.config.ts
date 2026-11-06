@@ -64,6 +64,8 @@ export default defineNuxtConfig({
   },
   // 运行时全局变量
   runtimeConfig: {
+    // Python RAG FastAPI（密钥只在 rag-service/.env，前端零密钥）
+    ragServiceUrl: process.env.RAG_SERVICE_URL || "http://127.0.0.1:8002",
     count: 0, // 写在外面的是服务端的变量,在客户端是访问不到的
     // Dify AI 配置（API Key 存于数据库 system_configs 表，环境变量 DIFY_API_KEY 为备用）
     difyApiBase: "https://api.dify.ai/v1",
@@ -78,3 +80,4 @@ export default defineNuxtConfig({
     },
   },
 });
+

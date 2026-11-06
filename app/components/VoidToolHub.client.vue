@@ -37,7 +37,7 @@
       </button>
     </TransitionGroup>
 
-    <!-- 主圆：拖拽、展开或收起四个同级工具入口 -->
+    <!-- 主圆：拖拽、展开或收起五个同级工具入口 -->
     <button
       class="tool-hub__fab"
       :class="{ 'tool-hub__fab--active': menuOpen || chatOpen || agentAssistOpen }"
@@ -214,12 +214,12 @@
 <script setup lang="ts">
 import { useOrderAutomationStore } from "~/stores/orderAutomation";
 
-type OrbKey = "error" | "agent" | "ai" | "theme";
+type OrbKey = "error" | "agent" | "ai" | "rag" | "theme";
 type DragSource = "fab" | "header";
 
 const FAB_SIZE = 56;
 const ORB_SIZE = 48;
-const ORB_RADIUS = 78;
+const ORB_RADIUS = 86;
 const PANEL_GAP = 14;
 const PANEL_IDEAL_W = 380;
 const PANEL_IDEAL_H = 520;
@@ -228,14 +228,14 @@ const AGENT_PANEL_H = 320;
 
 /** 可选扇形方案（角度均为标准数学角，0° 向右、逆时针为正） */
 const FAN_PRESETS: { key: string; angles: number[] }[] = [
-  { key: "up", angles: [-165, -115, -65, -15] },
-  { key: "up-left", angles: [180, -145, -110, -75] },
-  { key: "up-right", angles: [-105, -70, -35, 0] },
-  { key: "left", angles: [135, 165, -165, -135] },
-  { key: "right", angles: [-45, -15, 15, 45] },
-  { key: "down", angles: [15, 65, 115, 165] },
-  { key: "down-left", angles: [75, 110, 145, 180] },
-  { key: "down-right", angles: [0, 35, 70, 105] },
+  { key: "up", angles: [-170, -130, -90, -50, -10] },
+  { key: "up-left", angles: [180, -150, -120, -90, -60] },
+  { key: "up-right", angles: [-120, -90, -60, -30, 0] },
+  { key: "left", angles: [120, 150, 180, -150, -120] },
+  { key: "right", angles: [-60, -30, 0, 30, 60] },
+  { key: "down", angles: [10, 50, 90, 130, 170] },
+  { key: "down-left", angles: [60, 95, 130, 165, 200] },
+  { key: "down-right", angles: [-20, 15, 50, 85, 120] },
 ];
 
 const { messages, isStreaming, sendMessage, clearMessages } = useAiChat();
@@ -270,6 +270,8 @@ const quickPrompts = [
   "有什么无糖的选择？",
 ];
 
+const route = useRoute();
+
 const orbs = computed(() => [
   {
     key: "error" as const,
@@ -294,6 +296,14 @@ const orbs = computed(() => [
     short: "AI",
     icon: "bot",
     active: chatOpen.value,
+  },
+  {
+    key: "rag" as const,
+    id: undefined as string | undefined,
+    label: "知识库",
+    short: "知识",
+    icon: "brain",
+    active: route.path === "/rag" || route.path.startsWith("/rag/"),
   },
   {
     key: "theme" as const,
@@ -628,6 +638,12 @@ function onOrbClick(key: OrbKey) {
     chatOpen.value = true;
     return;
   }
+  if (key === "rag") {
+    agentAssistOpen.value = false;
+    chatOpen.value = false;
+    navigateTo("/rag");
+    return;
+  }
   if (key === "theme") toggleTheme();
 }
 
@@ -837,6 +853,15 @@ onUnmounted(() => {
   &--theme {
     color: var(--xj-accent);
     border-color: var(--xj-border-strong);
+  }
+
+  &--rag {
+    color: var(--xj-accent);
+    border-color: var(--xj-border-strong);
+
+    &:hover {
+      background: var(--xj-accent-soft);
+    }
   }
 
   &--error {

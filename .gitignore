@@ -22,3 +22,9 @@ logs
 .env
 .env.*
 !.env.example
+
+# RAG Python service local state
+rag-service/.venv/
+rag-service/data/
+rag-service/.env
+
