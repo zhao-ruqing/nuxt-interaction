@@ -1,10 +1,14 @@
 <template>
   <VoidShell>
     <header class="void-nav void-nav--static">
-      <NuxtLink to="/" class="void-nav__logo" data-magnetic>行鉴</NuxtLink>
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>无疆</NuxtLink>
       <nav class="void-nav__links">
-        <NuxtLink to="/products" class="void-nav__link" data-magnetic>商城</NuxtLink>
-        <NuxtLink to="/xingjian" class="void-nav__link" data-magnetic>行鉴</NuxtLink>
+        <NuxtLink to="/products" class="void-nav__link" data-magnetic
+          >商城</NuxtLink
+        >
+        <NuxtLink to="/xingjian" class="void-nav__link" data-magnetic
+          >无疆</NuxtLink
+        >
         <AuthAccountLinks variant="void" />
       </nav>
     </header>
@@ -18,7 +22,11 @@
       <div v-else-if="error" class="detail-state">
         <LucideIcon name="frown" :size="48" class="detail-state__icon" />
         <p>{{ error }}</p>
-        <NuxtLink to="/products" class="void-btn void-btn--primary detail-state__btn" data-magnetic>
+        <NuxtLink
+          to="/products"
+          class="void-btn void-btn--primary detail-state__btn"
+          data-magnetic
+        >
           <span class="void-btn__glow" />
           返回商城
         </NuxtLink>
@@ -33,13 +41,25 @@
 
         <div class="detail-main" ref="mainRef">
           <div class="detail-image" :class="`bg-${product.category}`">
-            <LucideIcon :name="product.image" :size="140" color="#fff" class="detail-image__icon" />
+            <LucideIcon
+              :name="product.image"
+              :size="140"
+              color="#fff"
+              class="detail-image__icon"
+            />
           </div>
 
           <div class="detail-info">
             <div class="detail-info__tags">
-              <span class="detail-chip detail-chip--accent">{{ product.categoryName }}</span>
-              <span v-for="tag in product.tags" :key="tag" class="detail-chip">{{ tag }}</span>
+              <span class="detail-chip detail-chip--accent">{{
+                product.categoryName
+              }}</span>
+              <span
+                v-for="tag in product.tags"
+                :key="tag"
+                class="detail-chip"
+                >{{ tag }}</span
+              >
             </div>
 
             <h1 class="detail-info__title">{{ product.name }}</h1>
@@ -75,16 +95,30 @@
             <div class="detail-qty">
               <div class="detail-label">数量</div>
               <div class="detail-qty__control">
-                <button data-ghost-target="quantity-minus" :disabled="quantity <= 1" @click="quantity--">−</button>
+                <button
+                  data-ghost-target="quantity-minus"
+                  :disabled="quantity <= 1"
+                  @click="quantity--"
+                >
+                  −
+                </button>
                 <span data-ghost-target="quantity-value">{{ quantity }}</span>
-                <button data-ghost-target="quantity-plus" :disabled="quantity >= product.stock" @click="quantity++">+</button>
+                <button
+                  data-ghost-target="quantity-plus"
+                  :disabled="quantity >= product.stock"
+                  @click="quantity++"
+                >
+                  +
+                </button>
               </div>
             </div>
 
             <div class="detail-actions">
               <div class="detail-total">
                 <span class="detail-total__label">合计</span>
-                <span class="detail-total__price">¥{{ currentPrice * quantity }}</span>
+                <span class="detail-total__price"
+                  >¥{{ currentPrice * quantity }}</span
+                >
               </div>
               <button
                 class="void-btn void-btn--ghost detail-actions__cart"
@@ -107,10 +141,19 @@
           </div>
         </div>
 
-        <div v-if="product.ingredients?.length" class="detail-ingredients" ref="ingredientsRef">
+        <div
+          v-if="product.ingredients?.length"
+          class="detail-ingredients"
+          ref="ingredientsRef"
+        >
           <h2>配料表</h2>
           <div class="detail-ingredients__list">
-            <span v-for="item in product.ingredients" :key="item" class="detail-ingredients__item">{{ item }}</span>
+            <span
+              v-for="item in product.ingredients"
+              :key="item"
+              class="detail-ingredients__item"
+              >{{ item }}</span
+            >
           </div>
         </div>
       </template>
@@ -119,185 +162,202 @@
 </template>
 
 <script setup lang="ts">
-import type { Product, ProductDetailResponse } from '~/types/product'
-import { findSpecMatch, validateOrderQuantity } from '~/composables/useActionExecutor'
-import { useOrderAutomationStore } from '~/stores/orderAutomation'
-import { gsap } from 'gsap'
+import { gsap } from "gsap";
+import {
+  findSpecMatch,
+  validateOrderQuantity,
+} from "~/composables/useActionExecutor";
+import { useOrderAutomationStore } from "~/stores/orderAutomation";
+import type { Product, ProductDetailResponse } from "~/types/product";
 
-definePageMeta({ layout: false })
+definePageMeta({ layout: false });
 
-const route = useRoute()
-const orderStore = useOrderAutomationStore()
-const ghostHand = useGhostHand()
+const route = useRoute();
+const orderStore = useOrderAutomationStore();
+const ghostHand = useGhostHand();
 
-const product = ref<Product | null>(null)
-const pending = ref(true)
-const error = ref('')
-const selectedSpec = ref(0)
-const quantity = ref(1)
-const autoOrderRunning = ref(false)
+const product = ref<Product | null>(null);
+const pending = ref(true);
+const error = ref("");
+const selectedSpec = ref(0);
+const quantity = ref(1);
+const autoOrderRunning = ref(false);
 
-const mainRef = ref<HTMLElement>()
-const ingredientsRef = ref<HTMLElement>()
+const mainRef = ref<HTMLElement>();
+const ingredientsRef = ref<HTMLElement>();
 
 const currentPrice = computed(() => {
-  if (!product.value) return 0
-  return product.value.specs[selectedSpec.value]?.price ?? product.value.price
-})
+  if (!product.value) return 0;
+  return product.value.specs[selectedSpec.value]?.price ?? product.value.price;
+});
 
 useHead({
-  title: computed(() => product.value ? `${product.value.name} — 行鉴` : '商品详情 — 行鉴'),
+  title: computed(() =>
+    product.value ? `${product.value.name} — 无疆` : "商品详情 — 无疆",
+  ),
   link: [
     {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
     },
   ],
-})
+});
 
 /** 格式化销量展示 */
 function formatSales(n: number) {
-  return n >= 10000 ? `${(n / 10000).toFixed(1)}万` : n.toString()
+  return n >= 10000 ? `${(n / 10000).toFixed(1)}万` : n.toString();
 }
 
 /** 模拟加入购物车 */
 function addToCart() {
-  ElMessage.success(`已将 ${quantity.value} 杯「${product.value?.name}」加入购物车（模拟）`)
+  ElMessage.success(
+    `已将 ${quantity.value} 杯「${product.value?.name}」加入购物车（模拟）`,
+  );
 }
 
 /** 跳转支付页立即购买 */
 function buyNow() {
-  if (!product.value) return
+  if (!product.value) return;
 
-  const qtyCheck = validateOrderQuantity(quantity.value, product.value.stock)
+  const qtyCheck = validateOrderQuantity(quantity.value, product.value.stock);
   if (!qtyCheck.valid) {
-    ElMessage.warning(qtyCheck.message!)
-    return
+    ElMessage.warning(qtyCheck.message!);
+    return;
   }
 
   navigateTo({
-    path: '/payment',
+    path: "/payment",
     query: {
       productId: product.value.id,
       specIndex: selectedSpec.value,
       quantity: quantity.value,
-      from: orderStore.pending?.status === 'running' ? 'auto' : undefined,
+      from: orderStore.pending?.status === "running" ? "auto" : undefined,
     },
-  })
+  });
 }
 
 /** 拉取商品详情 */
 async function fetchProduct() {
-  pending.value = true
-  error.value = ''
+  pending.value = true;
+  error.value = "";
   try {
-    const res = await $fetch<ProductDetailResponse>(`/api/products/${route.params.id}`)
+    const res = await $fetch<ProductDetailResponse>(
+      `/api/products/${route.params.id}`,
+    );
     if (res.success) {
-      product.value = res.data
-      nextTick(playEnterAnimation)
+      product.value = res.data;
+      nextTick(playEnterAnimation);
     }
-  }
-  catch (e: any) {
-    error.value = e?.data?.message || '商品加载失败'
-  }
-  finally {
-    pending.value = false
+  } catch (e: any) {
+    error.value = e?.data?.message || "商品加载失败";
+  } finally {
+    pending.value = false;
   }
 }
 
 /** 详情区块入场动画 */
 function playEnterAnimation() {
-  const targets = [mainRef.value, ingredientsRef.value].filter(Boolean)
-  if (!targets.length) return
+  const targets = [mainRef.value, ingredientsRef.value].filter(Boolean);
+  if (!targets.length) return;
   gsap.fromTo(
     targets,
     { y: 36, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out' },
-  )
+    { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: "power3.out" },
+  );
 }
 
 /** AI 自动下单：幽灵手依次点击规格、数量、立即购买 */
 async function runAutoOrder() {
-  const order = orderStore.pending
-  if (!order || order.status !== 'pending') return
-  if (order.productId !== Number(route.params.id)) return
-  if (!product.value || autoOrderRunning.value) return
+  const order = orderStore.pending;
+  if (!order || order.status !== "pending") return;
+  if (order.productId !== Number(route.params.id)) return;
+  if (!product.value || autoOrderRunning.value) return;
 
-  autoOrderRunning.value = true
-  orderStore.updateStatus('running')
+  autoOrderRunning.value = true;
+  orderStore.updateStatus("running");
 
-  await nextTick()
-  await new Promise(r => setTimeout(r, 600))
+  await nextTick();
+  await new Promise((r) => setTimeout(r, 600));
 
   try {
-    const specResult = findSpecMatch(order.specs, product.value.specs)
+    const specResult = findSpecMatch(order.specs, product.value.specs);
     if (!specResult.matched) {
-      const available = product.value.specs.map(s => s.size).join('、')
-      const msg = `规格「${order.specs}」与商品不符，可选：${available}`
-      ElMessage.warning(msg)
-      orderStore.updateStatus('failed', msg)
-      return
+      const available = product.value.specs.map((s) => s.size).join("、");
+      const msg = `规格「${order.specs}」与商品不符，可选：${available}`;
+      ElMessage.warning(msg);
+      orderStore.updateStatus("failed", msg);
+      return;
     }
 
-    const qtyCheck = validateOrderQuantity(order.quantity, product.value.stock)
+    const qtyCheck = validateOrderQuantity(order.quantity, product.value.stock);
     if (!qtyCheck.valid) {
-      ElMessage.warning(qtyCheck.message!)
-      orderStore.updateStatus('failed', qtyCheck.message!)
-      return
+      ElMessage.warning(qtyCheck.message!);
+      orderStore.updateStatus("failed", qtyCheck.message!);
+      return;
     }
 
-    const specIndex = specResult.index
-    const targetQty = order.quantity
-    selectedSpec.value = specIndex
-    quantity.value = 1
+    const specIndex = specResult.index;
+    const targetQty = order.quantity;
+    selectedSpec.value = specIndex;
+    quantity.value = 1;
 
-    await nextTick()
-    await new Promise(r => setTimeout(r, 300))
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 300));
 
-    const specBtn = document.querySelector(`[data-ghost-target="spec-${specIndex}"]`) as HTMLElement
-    if (specBtn) await ghostHand.tap(specBtn)
+    const specBtn = document.querySelector(
+      `[data-ghost-target="spec-${specIndex}"]`,
+    ) as HTMLElement;
+    if (specBtn) await ghostHand.tap(specBtn);
 
     if (targetQty > 1) {
-      const plusBtn = document.querySelector('[data-ghost-target="quantity-plus"]') as HTMLElement
+      const plusBtn = document.querySelector(
+        '[data-ghost-target="quantity-plus"]',
+      ) as HTMLElement;
       for (let i = 1; i < targetQty; i++) {
-        if (plusBtn && !plusBtn.hasAttribute('disabled')) {
-          await ghostHand.tap(plusBtn)
-        }
-        else {
-          quantity.value++
+        if (plusBtn && !plusBtn.hasAttribute("disabled")) {
+          await ghostHand.tap(plusBtn);
+        } else {
+          quantity.value++;
         }
       }
     }
 
-    await new Promise(r => setTimeout(r, 300))
+    await new Promise((r) => setTimeout(r, 300));
 
-    const buyBtn = document.querySelector('[data-ghost-target="buy-now"]') as HTMLElement
+    const buyBtn = document.querySelector(
+      '[data-ghost-target="buy-now"]',
+    ) as HTMLElement;
     if (buyBtn) {
-      await ghostHand.tap(buyBtn)
-      orderStore.updateStatus('done', `${product.value.name} × ${targetQty}，请在支付页确认`)
+      await ghostHand.tap(buyBtn);
+      orderStore.updateStatus(
+        "done",
+        `${product.value.name} × ${targetQty}，请在支付页确认`,
+      );
     }
-  }
-  catch (e: any) {
-    orderStore.updateStatus('failed', e?.message || '自动下单失败')
-    ElMessage.error('自动下单失败，请手动操作')
-  }
-  finally {
-    ghostHand.hide()
-    autoOrderRunning.value = false
-    setTimeout(() => orderStore.clear(), 8000)
+  } catch (e: any) {
+    orderStore.updateStatus("failed", e?.message || "自动下单失败");
+    ElMessage.error("自动下单失败，请手动操作");
+  } finally {
+    ghostHand.hide();
+    autoOrderRunning.value = false;
+    setTimeout(() => orderStore.clear(), 8000);
   }
 }
 
 watch(
   () => [product.value, orderStore.pending] as const,
   ([p, order]) => {
-    if (p && order?.status === 'pending' && order.productId === Number(route.params.id)) {
-      runAutoOrder()
+    if (
+      p &&
+      order?.status === "pending" &&
+      order.productId === Number(route.params.id)
+    ) {
+      runAutoOrder();
     }
   },
-)
+);
 
-onMounted(() => fetchProduct())
+onMounted(() => fetchProduct());
 </script>
 
 <style scoped lang="scss">
@@ -339,7 +399,9 @@ onMounted(() => fetchProduct())
 }
 
 @keyframes detail-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .detail-crumb {
@@ -383,11 +445,21 @@ onMounted(() => fetchProduct())
     filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5));
   }
 
-  &.bg-coffee { background: linear-gradient(135deg, #5c4033 0%, #2a1810 100%); }
-  &.bg-soda { background: linear-gradient(135deg, #8b1a1a 0%, #3d0a0a 100%); }
-  &.bg-tea { background: linear-gradient(135deg, #1a5c35 0%, #0a2e18 100%); }
-  &.bg-juice { background: linear-gradient(135deg, #8b5a10 0%, #3d2808 100%); }
-  &.bg-milk { background: linear-gradient(135deg, #5c3d5c 0%, #2a1a2a 100%); }
+  &.bg-coffee {
+    background: linear-gradient(135deg, #5c4033 0%, #2a1810 100%);
+  }
+  &.bg-soda {
+    background: linear-gradient(135deg, #8b1a1a 0%, #3d0a0a 100%);
+  }
+  &.bg-tea {
+    background: linear-gradient(135deg, #1a5c35 0%, #0a2e18 100%);
+  }
+  &.bg-juice {
+    background: linear-gradient(135deg, #8b5a10 0%, #3d2808 100%);
+  }
+  &.bg-milk {
+    background: linear-gradient(135deg, #5c3d5c 0%, #2a1a2a 100%);
+  }
 }
 
 .detail-info {
@@ -474,7 +546,9 @@ onMounted(() => fetchProduct())
     border: 1px solid var(--void-border);
     border-radius: var(--void-radius-sm);
     background: var(--void-surface);
-    transition: border-color 0.25s, background 0.25s;
+    transition:
+      border-color 0.25s,
+      background 0.25s;
     font-family: var(--void-display);
 
     &:hover {

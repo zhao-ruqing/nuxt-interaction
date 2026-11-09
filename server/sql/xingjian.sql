@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS xj_cities (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_xj_cities_code (code),
   KEY idx_xj_cities_status_sort (status, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行鉴城市';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='无疆城市';
 
 CREATE TABLE IF NOT EXISTS xj_points (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS xj_points (
   UNIQUE KEY uk_xj_points_code (code),
   KEY idx_xj_points_city_status (city_id, status),
   CONSTRAINT fk_xj_points_city FOREIGN KEY (city_id) REFERENCES xj_cities(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行鉴打卡点位';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='无疆打卡点位';
 
 CREATE TABLE IF NOT EXISTS xj_routes (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS xj_routes (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_xj_routes_city_status (city_id, status),
   CONSTRAINT fk_xj_routes_city FOREIGN KEY (city_id) REFERENCES xj_cities(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行鉴路线';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='无疆路线';
 
 CREATE TABLE IF NOT EXISTS xj_route_points (
   route_id INT UNSIGNED NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS xj_activities (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_xj_activities_city_time (city_id, starts_at),
   CONSTRAINT fk_xj_activities_city FOREIGN KEY (city_id) REFERENCES xj_cities(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行鉴活动';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='无疆活动';
 
 CREATE TABLE IF NOT EXISTS xj_activity_registrations (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -244,14 +244,14 @@ SELECT id, '杭州运河生活采集', '沿小河直街记录社区店铺、桥�
 FROM xj_cities c WHERE c.code = 'hangzhou' AND NOT EXISTS (SELECT 1 FROM xj_activities a WHERE a.title = '杭州运河生活采集');
 
 INSERT INTO xj_mall_products (name, description, points_price, stock, product_type)
-SELECT '行鉴城市徽章', '城市限定金属徽章，记录完成一次城市探索。', 120, 50, 'physical'
-WHERE NOT EXISTS (SELECT 1 FROM xj_mall_products WHERE name = '行鉴城市徽章');
+SELECT '无疆城市徽章', '城市限定金属徽章，记录完成一次城市探索。', 120, 50, 'physical'
+WHERE NOT EXISTS (SELECT 1 FROM xj_mall_products WHERE name = '无疆城市徽章');
 INSERT INTO xj_mall_products (name, description, points_price, stock, product_type)
 SELECT '城市路线电子手册', '包含路线故事、建筑背景和观察任务的数字手册。', 60, 999, 'virtual'
 WHERE NOT EXISTS (SELECT 1 FROM xj_mall_products WHERE name = '城市路线电子手册');
 INSERT INTO xj_mall_products (name, description, points_price, stock, product_type)
-SELECT '行鉴帆布袋', '简洁桌面网格视觉延伸的城市探索帆布袋。', 260, 30, 'physical'
-WHERE NOT EXISTS (SELECT 1 FROM xj_mall_products WHERE name = '行鉴帆布袋');
+SELECT '无疆帆布袋', '简洁桌面网格视觉延伸的城市探索帆布袋。', 260, 30, 'physical'
+WHERE NOT EXISTS (SELECT 1 FROM xj_mall_products WHERE name = '无疆帆布袋');
 
 INSERT INTO xj_point_accounts (user_id, balance, total_earned, total_spent)
 SELECT id, 300, 300, 0 FROM users
@@ -354,7 +354,7 @@ CREATE TABLE IF NOT EXISTS xj_settings (
   updated_by INT NULL,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_xj_settings_user FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='行鉴系统设置';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='无疆系统设置';
 
 INSERT INTO xj_settings (setting_key, setting_value, value_type, label, description) VALUES
 ('default_checkin_radius', '500', 'number', '默认打卡半径', '新建点位时建议使用的围栏半径，单位米'),

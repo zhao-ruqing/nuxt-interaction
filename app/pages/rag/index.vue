@@ -1,11 +1,15 @@
 <template>
   <VoidShell>
     <header class="void-nav void-nav--static">
-      <NuxtLink to="/" class="void-nav__logo" data-magnetic>行鉴</NuxtLink>
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>无疆</NuxtLink>
       <nav class="void-nav__links">
         <NuxtLink to="/" class="void-nav__link" data-magnetic>首页</NuxtLink>
-        <NuxtLink to="/products" class="void-nav__link" data-magnetic>饮品商城</NuxtLink>
-        <NuxtLink to="/rag" class="void-nav__link" data-magnetic>知识库</NuxtLink>
+        <NuxtLink to="/products" class="void-nav__link" data-magnetic
+          >饮品商城</NuxtLink
+        >
+        <NuxtLink to="/rag" class="void-nav__link" data-magnetic
+          >知识库</NuxtLink
+        >
         <AuthAccountLinks variant="void" />
       </nav>
     </header>
@@ -23,18 +27,34 @@
           </p>
         </div>
         <div class="rag-actions">
-          <button class="void-btn" type="button" :disabled="healthLoading" data-magnetic @click="checkHealth">
+          <button
+            class="void-btn"
+            type="button"
+            :disabled="healthLoading"
+            data-magnetic
+            @click="checkHealth"
+          >
             <span class="void-btn__glow" />
-            {{ healthLoading ? '检查中…' : '检查服务' }}
+            {{ healthLoading ? "检查中…" : "检查服务" }}
           </button>
-          <button class="void-btn void-btn--primary" type="button" :disabled="ingesting" data-magnetic @click="doIngest">
+          <button
+            class="void-btn void-btn--primary"
+            type="button"
+            :disabled="ingesting"
+            data-magnetic
+            @click="doIngest"
+          >
             <span class="void-btn__glow" />
-            {{ ingesting ? '入库中…' : '重新入库' }}
+            {{ ingesting ? "入库中…" : "重新入库" }}
           </button>
         </div>
       </header>
 
-      <div v-if="statusText" class="rag-status" :class="statusOk ? 'rag-status--ok' : 'rag-status--warn'">
+      <div
+        v-if="statusText"
+        class="rag-status"
+        :class="statusOk ? 'rag-status--ok' : 'rag-status--warn'"
+      >
         <LucideIcon :name="statusOk ? 'sparkles' : 'bug'" :size="16" />
         <span>{{ statusText }}</span>
       </div>
@@ -43,25 +63,72 @@
         <div class="rag-tool">
           <div class="rag-tool__title">新增 Q&amp;A</div>
           <p class="rag-tool__hint">写入数据源并增量入库（整条问答不拆开）</p>
-          <textarea v-model="qaQuestion" rows="2" placeholder="问题" :disabled="qaSaving" />
-          <textarea v-model="qaAnswer" rows="3" placeholder="答案" :disabled="qaSaving" />
-          <button class="void-btn void-btn--primary" type="button" :disabled="qaSaving || !qaQuestion.trim() || !qaAnswer.trim()" data-magnetic @click="submitQa">
+          <textarea
+            v-model="qaQuestion"
+            rows="2"
+            placeholder="问题"
+            :disabled="qaSaving"
+          />
+          <textarea
+            v-model="qaAnswer"
+            rows="3"
+            placeholder="答案"
+            :disabled="qaSaving"
+          />
+          <button
+            class="void-btn void-btn--primary"
+            type="button"
+            :disabled="qaSaving || !qaQuestion.trim() || !qaAnswer.trim()"
+            data-magnetic
+            @click="submitQa"
+          >
             <span class="void-btn__glow" />
-            {{ qaSaving ? '提交中…' : '提交问答' }}
+            {{ qaSaving ? "提交中…" : "提交问答" }}
           </button>
-          <div v-if="qaStatus" class="rag-tool__status" :class="qaOk ? 'ok' : 'warn'">{{ qaStatus }}</div>
+          <div
+            v-if="qaStatus"
+            class="rag-tool__status"
+            :class="qaOk ? 'ok' : 'warn'"
+          >
+            {{ qaStatus }}
+          </div>
         </div>
 
         <div class="rag-tool">
           <div class="rag-tool__title">新增数据源</div>
-          <p class="rag-tool__hint">支持 md / txt / markdown / xlsx；同名自动改名，不覆盖</p>
-          <input class="rag-tool__subdir" v-model="uploadSubdir" type="text" placeholder="相对子目录（可选，默认 16-用户上传）" :disabled="uploading" />
-          <input type="file" accept=".md,.txt,.markdown,.xlsx" :disabled="uploading" @change="onUploadFile" />
-          <button class="void-btn void-btn--primary" type="button" :disabled="uploading || !uploadFile" data-magnetic @click="submitUpload">
+          <p class="rag-tool__hint">
+            支持 md / txt / markdown / xlsx；同名自动改名，不覆盖
+          </p>
+          <input
+            class="rag-tool__subdir"
+            v-model="uploadSubdir"
+            type="text"
+            placeholder="相对子目录（可选，默认 16-用户上传）"
+            :disabled="uploading"
+          />
+          <input
+            type="file"
+            accept=".md,.txt,.markdown,.xlsx"
+            :disabled="uploading"
+            @change="onUploadFile"
+          />
+          <button
+            class="void-btn void-btn--primary"
+            type="button"
+            :disabled="uploading || !uploadFile"
+            data-magnetic
+            @click="submitUpload"
+          >
             <span class="void-btn__glow" />
-            {{ uploading ? '上传中…' : '上传并入库' }}
+            {{ uploading ? "上传中…" : "上传并入库" }}
           </button>
-          <div v-if="uploadStatus" class="rag-tool__status" :class="uploadOk ? 'ok' : 'warn'">{{ uploadStatus }}</div>
+          <div
+            v-if="uploadStatus"
+            class="rag-tool__status"
+            :class="uploadOk ? 'ok' : 'warn'"
+          >
+            {{ uploadStatus }}
+          </div>
         </div>
       </section>
 
@@ -80,7 +147,9 @@
             :class="m.role"
           >
             <div class="rag-bubble">
-              <div class="rag-role">{{ m.role === 'user' ? '你' : '知识库' }}</div>
+              <div class="rag-role">
+                {{ m.role === "user" ? "你" : "知识库" }}
+              </div>
               <div class="rag-content">{{ m.content }}</div>
 
               <div v-if="m.citations?.length" class="rag-cites">
@@ -88,8 +157,12 @@
                 <div v-for="(c, i) in m.citations" :key="i" class="rag-cite">
                   <div class="rag-cite__meta">
                     <code>{{ c.source }}</code>
-                    <span v-if="c.chunk_index != null">#{{ c.chunk_index }}</span>
-                    <span v-if="c.similarity != null" class="sim">sim {{ Number(c.similarity).toFixed(3) }}</span>
+                    <span v-if="c.chunk_index != null"
+                      >#{{ c.chunk_index }}</span
+                    >
+                    <span v-if="c.similarity != null" class="sim"
+                      >sim {{ Number(c.similarity).toFixed(3) }}</span
+                    >
                   </div>
                   <pre>{{ c.excerpt }}</pre>
                 </div>
@@ -116,9 +189,14 @@
             :disabled="asking"
             @keydown.enter.exact.prevent="ask"
           />
-          <button class="void-btn void-btn--primary" type="submit" :disabled="asking || !question.trim()" data-magnetic>
+          <button
+            class="void-btn void-btn--primary"
+            type="submit"
+            :disabled="asking || !question.trim()"
+            data-magnetic
+          >
             <span class="void-btn__glow" />
-            {{ asking ? '检索中…' : '提问' }}
+            {{ asking ? "检索中…" : "提问" }}
           </button>
         </form>
       </section>
@@ -127,196 +205,199 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: false })
+definePageMeta({ layout: false });
 
-useHead({ title: '知识库 · 行鉴' })
+useHead({ title: "知识库 · 无疆" });
 
 interface Citation {
-  source?: string
-  chunk_index?: number
-  excerpt?: string
-  similarity?: number
-  distance?: number
+  source?: string;
+  chunk_index?: number;
+  excerpt?: string;
+  similarity?: number;
+  distance?: number;
 }
 
 interface RagMessage {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  citations?: Citation[]
-  process?: unknown
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  citations?: Citation[];
+  process?: unknown;
 }
-
 
 function rewriteInfo(m: RagMessage): string {
-  const steps = (m.process as any)?.steps
-  if (!Array.isArray(steps)) return ''
-  const s = steps.find((x: any) => x?.name === '追问改写' || x?.step === 0)
-  const d = s?.detail || {}
-  const rewritten = (d.rewritten_question || '').toString().trim()
-  const original = (d.original_question || '').toString().trim()
-  if (!rewritten) return ''
-  if (original && rewritten !== original) return rewritten
+  const steps = (m.process as any)?.steps;
+  if (!Array.isArray(steps)) return "";
+  const s = steps.find((x: any) => x?.name === "追问改写" || x?.step === 0);
+  const d = s?.detail || {};
+  const rewritten = (d.rewritten_question || "").toString().trim();
+  const original = (d.original_question || "").toString().trim();
+  if (!rewritten) return "";
+  if (original && rewritten !== original) return rewritten;
   // still show when history was used even if unchanged
-  if ((d.history_turns_used || 0) > 0) return rewritten
-  return ''
+  if ((d.history_turns_used || 0) > 0) return rewritten;
+  return "";
 }
 
-const messages = ref<RagMessage[]>([])
-const question = ref('')
-const asking = ref(false)
-const ingesting = ref(false)
-const healthLoading = ref(false)
-const statusText = ref('')
-const statusOk = ref(false)
-const listRef = ref<HTMLElement | null>(null)
+const messages = ref<RagMessage[]>([]);
+const question = ref("");
+const asking = ref(false);
+const ingesting = ref(false);
+const healthLoading = ref(false);
+const statusText = ref("");
+const statusOk = ref(false);
+const listRef = ref<HTMLElement | null>(null);
 
-const qaQuestion = ref('')
-const qaAnswer = ref('')
-const qaSaving = ref(false)
-const qaStatus = ref('')
-const qaOk = ref(false)
+const qaQuestion = ref("");
+const qaAnswer = ref("");
+const qaSaving = ref(false);
+const qaStatus = ref("");
+const qaOk = ref(false);
 
-const uploadSubdir = ref('')
-const uploadFile = ref<File | null>(null)
-const uploading = ref(false)
-const uploadStatus = ref('')
-const uploadOk = ref(false)
+const uploadSubdir = ref("");
+const uploadFile = ref<File | null>(null);
+const uploading = ref(false);
+const uploadStatus = ref("");
+const uploadOk = ref(false);
 
 async function checkHealth() {
-  healthLoading.value = true
+  healthLoading.value = true;
   try {
-    const h = await $fetch<any>('/api/rag/health')
-    statusOk.value = !!h?.ok
-    statusText.value = `服务正常 · chat=${h.chat_model} · embed=${h.embedding_model} · data=${h.data_dir}`
-  }
-  catch (e: any) {
-    statusOk.value = false
-    statusText.value = e?.data?.message || e?.message || 'RAG 服务未启动（请先跑 rag-service/run.ps1）'
-  }
-  finally {
-    healthLoading.value = false
+    const h = await $fetch<any>("/api/rag/health");
+    statusOk.value = !!h?.ok;
+    statusText.value = `服务正常 · chat=${h.chat_model} · embed=${h.embedding_model} · data=${h.data_dir}`;
+  } catch (e: any) {
+    statusOk.value = false;
+    statusText.value =
+      e?.data?.message ||
+      e?.message ||
+      "RAG 服务未启动（请先跑 rag-service/run.ps1）";
+  } finally {
+    healthLoading.value = false;
   }
 }
 
 async function doIngest() {
-  ingesting.value = true
+  ingesting.value = true;
   try {
-    const r = await $fetch<any>('/api/rag/ingest', { method: 'POST', body: { reset: true } })
-    statusOk.value = true
-    statusText.value = `入库完成：${r.files} 文件 / ${r.chunks} chunks · chroma=${r.chroma_dir}`
-  }
-  catch (e: any) {
-    statusOk.value = false
-    statusText.value = e?.data?.message || e?.message || '入库失败'
-  }
-  finally {
-    ingesting.value = false
+    const r = await $fetch<any>("/api/rag/ingest", {
+      method: "POST",
+      body: { reset: true },
+    });
+    statusOk.value = true;
+    statusText.value = `入库完成：${r.files} 文件 / ${r.chunks} chunks · chroma=${r.chroma_dir}`;
+  } catch (e: any) {
+    statusOk.value = false;
+    statusText.value = e?.data?.message || e?.message || "入库失败";
+  } finally {
+    ingesting.value = false;
   }
 }
 
 async function ask() {
-  const q = question.value.trim()
-  if (!q || asking.value) return
+  const q = question.value.trim();
+  if (!q || asking.value) return;
   // Prior turns only (before this question) for follow-up rewrite on the backend.
   const history = messages.value
-    .filter(m => (m.role === 'user' || m.role === 'assistant') && m.content && m.content !== '检索中…')
-    .map(m => ({ role: m.role, content: m.content }))
-  messages.value.push({ id: `u-${Date.now()}`, role: 'user', content: q })
-  question.value = ''
-  asking.value = true
-  const aid = `a-${Date.now()}`
-  messages.value.push({ id: aid, role: 'assistant', content: '检索中…' })
-  await nextTick()
-  listRef.value?.scrollTo({ top: listRef.value.scrollHeight })
+    .filter(
+      (m) =>
+        (m.role === "user" || m.role === "assistant") &&
+        m.content &&
+        m.content !== "检索中…",
+    )
+    .map((m) => ({ role: m.role, content: m.content }));
+  messages.value.push({ id: `u-${Date.now()}`, role: "user", content: q });
+  question.value = "";
+  asking.value = true;
+  const aid = `a-${Date.now()}`;
+  messages.value.push({ id: aid, role: "assistant", content: "检索中…" });
+  await nextTick();
+  listRef.value?.scrollTo({ top: listRef.value.scrollHeight });
   try {
-    const r = await $fetch<any>('/api/rag/chat', {
-      method: 'POST',
+    const r = await $fetch<any>("/api/rag/chat", {
+      method: "POST",
       body: { question: q, top_k: 4, messages: history },
-    })
-    const msg = messages.value.find(m => m.id === aid)
+    });
+    const msg = messages.value.find((m) => m.id === aid);
     if (msg) {
-      msg.content = r.answer || '(空回答)'
-      msg.citations = r.citations || []
-      msg.process = r.process
+      msg.content = r.answer || "(空回答)";
+      msg.citations = r.citations || [];
+      msg.process = r.process;
     }
-  }
-  catch (e: any) {
-    const msg = messages.value.find(m => m.id === aid)
-    if (msg) msg.content = e?.data?.message || e?.message || '提问失败'
-  }
-  finally {
-    asking.value = false
-    await nextTick()
-    listRef.value?.scrollTo({ top: listRef.value.scrollHeight })
+  } catch (e: any) {
+    const msg = messages.value.find((m) => m.id === aid);
+    if (msg) msg.content = e?.data?.message || e?.message || "提问失败";
+  } finally {
+    asking.value = false;
+    await nextTick();
+    listRef.value?.scrollTo({ top: listRef.value.scrollHeight });
   }
 }
 
-
 async function submitQa() {
-  const q = qaQuestion.value.trim()
-  const a = qaAnswer.value.trim()
-  if (!q || !a || qaSaving.value) return
-  qaSaving.value = true
-  qaStatus.value = ''
+  const q = qaQuestion.value.trim();
+  const a = qaAnswer.value.trim();
+  if (!q || !a || qaSaving.value) return;
+  qaSaving.value = true;
+  qaStatus.value = "";
   try {
-    const r = await $fetch<any>('/api/rag/qa', {
-      method: 'POST',
+    const r = await $fetch<any>("/api/rag/qa", {
+      method: "POST",
       body: { question: q, answer: a },
-    })
-    qaOk.value = true
-    qaStatus.value = `已保存并增量入库：${r.rel_source || r.saved_path} · +${r.added_chunks ?? r.chunks ?? 0} chunks · 总数 ${r.collection_count ?? '?'}`
-    qaQuestion.value = ''
-    qaAnswer.value = ''
-    statusOk.value = true
-    statusText.value = qaStatus.value
-  }
-  catch (e: any) {
-    qaOk.value = false
-    qaStatus.value = e?.data?.message || e?.message || '提交问答失败'
-  }
-  finally {
-    qaSaving.value = false
+    });
+    qaOk.value = true;
+    qaStatus.value = `已保存并增量入库：${r.rel_source || r.saved_path} · +${r.added_chunks ?? r.chunks ?? 0} chunks · 总数 ${r.collection_count ?? "?"}`;
+    qaQuestion.value = "";
+    qaAnswer.value = "";
+    statusOk.value = true;
+    statusText.value = qaStatus.value;
+  } catch (e: any) {
+    qaOk.value = false;
+    qaStatus.value = e?.data?.message || e?.message || "提交问答失败";
+  } finally {
+    qaSaving.value = false;
   }
 }
 
 function onUploadFile(ev: Event) {
-  const input = ev.target as HTMLInputElement
-  uploadFile.value = input.files?.[0] || null
-  uploadStatus.value = uploadFile.value ? `已选择：${uploadFile.value.name}` : ''
-  uploadOk.value = !!uploadFile.value
+  const input = ev.target as HTMLInputElement;
+  uploadFile.value = input.files?.[0] || null;
+  uploadStatus.value = uploadFile.value
+    ? `已选择：${uploadFile.value.name}`
+    : "";
+  uploadOk.value = !!uploadFile.value;
 }
 
 async function submitUpload() {
-  if (!uploadFile.value || uploading.value) return
-  uploading.value = true
-  uploadStatus.value = ''
+  if (!uploadFile.value || uploading.value) return;
+  uploading.value = true;
+  uploadStatus.value = "";
   try {
-    const fd = new FormData()
-    fd.append('file', uploadFile.value)
-    const sub = uploadSubdir.value.trim()
-    if (sub) fd.append('subdir', sub)
-    const r = await $fetch<any>('/api/rag/upload', {
-      method: 'POST',
+    const fd = new FormData();
+    fd.append("file", uploadFile.value);
+    const sub = uploadSubdir.value.trim();
+    if (sub) fd.append("subdir", sub);
+    const r = await $fetch<any>("/api/rag/upload", {
+      method: "POST",
       body: fd,
-    })
-    uploadOk.value = true
-    const renamed = r.renamed ? '（已自动改名避免覆盖）' : ''
-    uploadStatus.value = `已上传并增量入库${renamed}：${r.rel_source || r.saved_path} · +${r.added_chunks ?? r.chunks ?? 0} chunks · 总数 ${r.collection_count ?? '?'}`
-    statusOk.value = true
-    statusText.value = uploadStatus.value
-    uploadFile.value = null
-  }
-  catch (e: any) {
-    uploadOk.value = false
-    uploadStatus.value = e?.data?.message || e?.message || '上传失败'
-  }
-  finally {
-    uploading.value = false
+    });
+    uploadOk.value = true;
+    const renamed = r.renamed ? "（已自动改名避免覆盖）" : "";
+    uploadStatus.value = `已上传并增量入库${renamed}：${r.rel_source || r.saved_path} · +${r.added_chunks ?? r.chunks ?? 0} chunks · 总数 ${r.collection_count ?? "?"}`;
+    statusOk.value = true;
+    statusText.value = uploadStatus.value;
+    uploadFile.value = null;
+  } catch (e: any) {
+    uploadOk.value = false;
+    uploadStatus.value = e?.data?.message || e?.message || "上传失败";
+  } finally {
+    uploading.value = false;
   }
 }
 
-onMounted(() => { checkHealth() })
+onMounted(() => {
+  checkHealth();
+});
 </script>
 
 <style scoped lang="scss">
@@ -567,7 +648,9 @@ onMounted(() => { checkHealth() })
     font: inherit;
     line-height: 1.5;
     outline: none;
-    transition: border-color 0.2s, background 0.2s;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
     box-sizing: border-box;
 
     &:focus {
@@ -625,7 +708,8 @@ onMounted(() => { checkHealth() })
   margin-top: 10px;
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px dashed color-mix(in srgb, var(--xj-accent) 45%, var(--void-border));
+  border: 1px dashed
+    color-mix(in srgb, var(--xj-accent) 45%, var(--void-border));
   background: color-mix(in srgb, var(--xj-accent-soft) 55%, transparent);
   font-size: 12px;
   line-height: 1.5;

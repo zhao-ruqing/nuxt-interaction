@@ -1,10 +1,12 @@
 <template>
   <VoidShell>
     <header class="void-nav void-nav--static">
-      <NuxtLink to="/" class="void-nav__logo" data-magnetic>行鉴</NuxtLink>
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>无疆</NuxtLink>
       <nav class="void-nav__links">
         <NuxtLink to="/" class="void-nav__link" data-magnetic>首页</NuxtLink>
-        <NuxtLink to="/auth/register" class="void-nav__cta" data-magnetic>注册</NuxtLink>
+        <NuxtLink to="/auth/register" class="void-nav__cta" data-magnetic
+          >注册</NuxtLink
+        >
       </nav>
     </header>
 
@@ -24,7 +26,11 @@
           @submit.prevent="handleLogin"
         >
           <el-form-item prop="username">
-            <el-input v-model="form.username" placeholder="用户名" size="large" />
+            <el-input
+              v-model="form.username"
+              placeholder="用户名"
+              size="large"
+            />
           </el-form-item>
           <el-form-item prop="password">
             <el-input
@@ -57,12 +63,15 @@
 <script setup lang="ts">
 import type { FormInstance, FormRules } from "element-plus";
 import { gsap } from "gsap";
-import { defaultPostLoginPath, resolveAuthRedirect } from "~/utils/authRedirect";
+import {
+  defaultPostLoginPath,
+  resolveAuthRedirect,
+} from "~/utils/authRedirect";
 
 definePageMeta({ layout: false });
 
 useHead({
-  title: "登录 — 行鉴",
+  title: "登录 — 无疆",
   link: [
     {
       rel: "stylesheet",
@@ -98,7 +107,7 @@ function resolveLandingPath(role?: string) {
 
 /** 已登录访问登录页时直接进入落地页 */
 async function redirectIfAuthenticated() {
-  const ok = userStore.isLoggedIn || await userStore.fetchUser();
+  const ok = userStore.isLoggedIn || (await userStore.fetchUser());
   if (ok) await navigateTo(resolveLandingPath(userStore.user?.role));
 }
 
@@ -129,9 +138,17 @@ async function handleLogin() {
 function playEnterAnimation() {
   const card = cardRef.value;
   if (!card) return;
-  gsap.fromTo(card, { y: 48, opacity: 0, scale: 0.96 }, {
-    y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "power3.out",
-  });
+  gsap.fromTo(
+    card,
+    { y: 48, opacity: 0, scale: 0.96 },
+    {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      duration: 0.9,
+      ease: "power3.out",
+    },
+  );
 }
 
 await redirectIfAuthenticated();

@@ -1,10 +1,14 @@
 <template>
   <VoidShell>
     <header class="void-nav void-nav--static">
-      <NuxtLink to="/" class="void-nav__logo" data-magnetic>行鉴</NuxtLink>
+      <NuxtLink to="/" class="void-nav__logo" data-magnetic>无疆</NuxtLink>
       <nav class="void-nav__links">
-        <NuxtLink to="/products" class="void-nav__link" data-magnetic>商城</NuxtLink>
-        <NuxtLink to="/xingjian" class="void-nav__link" data-magnetic>行鉴</NuxtLink>
+        <NuxtLink to="/products" class="void-nav__link" data-magnetic
+          >商城</NuxtLink
+        >
+        <NuxtLink to="/xingjian" class="void-nav__link" data-magnetic
+          >无疆</NuxtLink
+        >
         <AuthAccountLinks variant="void" />
       </nav>
     </header>
@@ -18,7 +22,11 @@
       <div v-else-if="error" class="pay-state">
         <LucideIcon name="frown" :size="48" class="pay-state__icon" />
         <p>{{ error }}</p>
-        <NuxtLink to="/products" class="void-btn void-btn--primary pay-state__btn" data-magnetic>
+        <NuxtLink
+          to="/products"
+          class="void-btn void-btn--primary pay-state__btn"
+          data-magnetic
+        >
           <span class="void-btn__glow" />
           返回商城
         </NuxtLink>
@@ -28,7 +36,9 @@
         <nav class="pay-crumb">
           <NuxtLink to="/products">饮品商城</NuxtLink>
           <span class="pay-crumb__sep">/</span>
-          <NuxtLink :to="`/products/${product.id}`">{{ product.name }}</NuxtLink>
+          <NuxtLink :to="`/products/${product.id}`">{{
+            product.name
+          }}</NuxtLink>
           <span class="pay-crumb__sep">/</span>
           <span>确认支付</span>
         </nav>
@@ -88,8 +98,12 @@
                 class="pay-method"
                 :class="{ 'pay-method--active': payMethod === method.key }"
               >
-                <input v-model="payMethod" type="radio" :value="method.key">
-                <LucideIcon :name="method.icon" :size="20" class="pay-method__icon" />
+                <input v-model="payMethod" type="radio" :value="method.key" />
+                <LucideIcon
+                  :name="method.icon"
+                  :size="20"
+                  class="pay-method__icon"
+                />
                 <span>{{ method.label }}</span>
               </label>
             </div>
@@ -104,13 +118,17 @@
                 placeholder="请输入 6 位以上支付密码"
                 data-ghost-target="pay-password"
                 @keyup.enter="handlePay"
-              >
+              />
               <p class="pay-field__hint">演示环境：任意 6 位以上密码即可</p>
             </div>
 
             <div class="pay-confirm">
               <label class="pay-confirm__check">
-                <input v-model="confirmed" type="checkbox" data-ghost-target="pay-confirm">
+                <input
+                  v-model="confirmed"
+                  type="checkbox"
+                  data-ghost-target="pay-confirm"
+                />
                 <span>我已核对订单信息，确认支付 ¥{{ totalPrice }}</span>
               </label>
             </div>
@@ -123,10 +141,12 @@
               @click="handlePay"
             >
               <span class="void-btn__glow" />
-              {{ paying ? '支付中...' : `确认支付 ¥${totalPrice}` }}
+              {{ paying ? "支付中..." : `确认支付 ¥${totalPrice}` }}
             </button>
 
-            <NuxtLink :to="`/products/${product.id}`" class="pay-cancel">返回修改</NuxtLink>
+            <NuxtLink :to="`/products/${product.id}`" class="pay-cancel"
+              >返回修改</NuxtLink
+            >
           </section>
         </div>
       </template>
@@ -135,156 +155,171 @@
 </template>
 
 <script setup lang="ts">
-import type { Product, ProductDetailResponse } from '~/types/product'
-import { validateOrderQuantity } from '~/composables/useActionExecutor'
-import { useOrderAutomationStore } from '~/stores/orderAutomation'
-import { gsap } from 'gsap'
+import { gsap } from "gsap";
+import { validateOrderQuantity } from "~/composables/useActionExecutor";
+import { useOrderAutomationStore } from "~/stores/orderAutomation";
+import type { Product, ProductDetailResponse } from "~/types/product";
 
-definePageMeta({ layout: false })
+definePageMeta({ layout: false });
 
 useHead({
-  title: '确认支付 — 行鉴',
+  title: "确认支付 — 无疆",
   link: [
     {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap',
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
     },
   ],
-})
+});
 
-const route = useRoute()
-const orderStore = useOrderAutomationStore()
+const route = useRoute();
+const orderStore = useOrderAutomationStore();
 
-const product = ref<Product | null>(null)
-const pending = ref(true)
-const error = ref('')
-const password = ref('')
-const confirmed = ref(false)
-const paying = ref(false)
-const payMethod = ref('wechat')
+const product = ref<Product | null>(null);
+const pending = ref(true);
+const error = ref("");
+const password = ref("");
+const confirmed = ref(false);
+const paying = ref(false);
+const payMethod = ref("wechat");
 
-const bannerRef = ref<HTMLElement>()
-const layoutRef = ref<HTMLElement>()
+const bannerRef = ref<HTMLElement>();
+const layoutRef = ref<HTMLElement>();
 
-const productId = computed(() => Number(route.query.productId))
-const specIndex = computed(() => Math.max(0, Number(route.query.specIndex) || 0))
-const orderQuantity = computed(() => Math.max(1, Number(route.query.quantity) || 1))
-const isAutoOrder = computed(() => route.query.from === 'auto')
+const productId = computed(() => Number(route.query.productId));
+const specIndex = computed(() =>
+  Math.max(0, Number(route.query.specIndex) || 0),
+);
+const orderQuantity = computed(() =>
+  Math.max(1, Number(route.query.quantity) || 1),
+);
+const isAutoOrder = computed(() => route.query.from === "auto");
 
 const payMethods = [
-  { key: 'wechat', label: '微信支付', icon: 'message-circle' },
-  { key: 'alipay', label: '支付宝', icon: 'wallet' },
-  { key: 'balance', label: '余额支付', icon: 'coins' },
-]
+  { key: "wechat", label: "微信支付", icon: "message-circle" },
+  { key: "alipay", label: "支付宝", icon: "wallet" },
+  { key: "balance", label: "余额支付", icon: "coins" },
+];
 
 const selectedSpecLabel = computed(() => {
-  if (!product.value) return ''
-  return product.value.specs[specIndex.value]?.size ?? product.value.specs[0]?.size ?? ''
-})
+  if (!product.value) return "";
+  return (
+    product.value.specs[specIndex.value]?.size ??
+    product.value.specs[0]?.size ??
+    ""
+  );
+});
 
 const unitPrice = computed(() => {
-  if (!product.value) return 0
-  return product.value.specs[specIndex.value]?.price ?? product.value.price
-})
+  if (!product.value) return 0;
+  return product.value.specs[specIndex.value]?.price ?? product.value.price;
+});
 
-const totalPrice = computed(() => unitPrice.value * orderQuantity.value)
+const totalPrice = computed(() => unitPrice.value * orderQuantity.value);
 
-const canPay = computed(() => confirmed.value && password.value.length >= 6)
+const canPay = computed(() => confirmed.value && password.value.length >= 6);
 
 /** 拉取订单商品信息 */
 async function fetchProduct() {
-  pending.value = true
-  error.value = ''
+  pending.value = true;
+  error.value = "";
 
   if (!productId.value || Number.isNaN(productId.value)) {
-    error.value = '缺少商品信息'
-    pending.value = false
-    return
+    error.value = "缺少商品信息";
+    pending.value = false;
+    return;
   }
 
   try {
-    const res = await $fetch<ProductDetailResponse>(`/api/products/${productId.value}`)
+    const res = await $fetch<ProductDetailResponse>(
+      `/api/products/${productId.value}`,
+    );
     if (res.success) {
-      product.value = res.data
-      const qtyCheck = validateOrderQuantity(orderQuantity.value, res.data.stock)
+      product.value = res.data;
+      const qtyCheck = validateOrderQuantity(
+        orderQuantity.value,
+        res.data.stock,
+      );
       if (!qtyCheck.valid) {
-        error.value = qtyCheck.message!
+        error.value = qtyCheck.message!;
       }
     }
-  }
-  catch (e: any) {
-    error.value = e?.data?.message || '订单加载失败'
-  }
-  finally {
-    pending.value = false
+  } catch (e: any) {
+    error.value = e?.data?.message || "订单加载失败";
+  } finally {
+    pending.value = false;
   }
 }
 
 /** 提交支付 */
 async function handlePay() {
-  if (!product.value || paying.value) return
+  if (!product.value || paying.value) return;
 
   if (!confirmed.value) {
-    ElMessage.warning('请先勾选确认支付')
-    return
+    ElMessage.warning("请先勾选确认支付");
+    return;
   }
   if (password.value.length < 6) {
-    ElMessage.warning('请输入至少 6 位支付密码')
-    return
+    ElMessage.warning("请输入至少 6 位支付密码");
+    return;
   }
 
-  const qtyCheck = validateOrderQuantity(orderQuantity.value, product.value.stock)
+  const qtyCheck = validateOrderQuantity(
+    orderQuantity.value,
+    product.value.stock,
+  );
   if (!qtyCheck.valid) {
-    ElMessage.warning(qtyCheck.message!)
-    return
+    ElMessage.warning(qtyCheck.message!);
+    return;
   }
 
-  paying.value = true
+  paying.value = true;
   try {
-    const res = await $fetch<{ success: boolean; message: string }>('/api/orders/checkout', {
-      method: 'POST',
-      body: {
-        productId: product.value.id,
-        quantity: orderQuantity.value,
-        password: password.value,
+    const res = await $fetch<{ success: boolean; message: string }>(
+      "/api/orders/checkout",
+      {
+        method: "POST",
+        body: {
+          productId: product.value.id,
+          quantity: orderQuantity.value,
+          password: password.value,
+        },
       },
-    })
+    );
 
     if (res.success) {
-      ElMessage.success(res.message || '支付成功！')
-      orderStore.clear()
-      await navigateTo('/products')
+      ElMessage.success(res.message || "支付成功！");
+      orderStore.clear();
+      await navigateTo("/products");
     }
-  }
-  catch (e: any) {
-    ElMessage.error(e?.data?.message || '支付失败，请重试')
-  }
-  finally {
-    paying.value = false
+  } catch (e: any) {
+    ElMessage.error(e?.data?.message || "支付失败，请重试");
+  } finally {
+    paying.value = false;
   }
 }
 
 /** 支付页区块入场动画 */
 function playEnterAnimation() {
-  const targets = [bannerRef.value, layoutRef.value].filter(Boolean)
-  if (!targets.length) return
+  const targets = [bannerRef.value, layoutRef.value].filter(Boolean);
+  if (!targets.length) return;
   gsap.fromTo(
     targets,
     { y: 36, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out' },
-  )
+    { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: "power3.out" },
+  );
 }
 
 onMounted(async () => {
-  await fetchProduct()
+  await fetchProduct();
 
   if (isAutoOrder.value && product.value && !error.value) {
-    ElMessage.info('AI 助手已为您跳转支付页，请确认订单并输入支付密码')
-    confirmed.value = true
+    ElMessage.info("AI 助手已为您跳转支付页，请确认订单并输入支付密码");
+    confirmed.value = true;
   }
 
-  nextTick(playEnterAnimation)
-})
+  nextTick(playEnterAnimation);
+});
 </script>
 
 <style scoped lang="scss">
@@ -326,7 +361,9 @@ onMounted(async () => {
 }
 
 @keyframes pay-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .pay-crumb {
@@ -439,11 +476,21 @@ onMounted(async () => {
     flex-shrink: 0;
     border: 1px solid var(--void-border);
 
-    &.bg-coffee { background: linear-gradient(135deg, #5c4033 0%, #2a1810 100%); }
-    &.bg-soda { background: linear-gradient(135deg, #8b1a1a 0%, #3d0a0a 100%); }
-    &.bg-tea { background: linear-gradient(135deg, #1a5c35 0%, #0a2e18 100%); }
-    &.bg-juice { background: linear-gradient(135deg, #8b5a10 0%, #3d2808 100%); }
-    &.bg-milk { background: linear-gradient(135deg, #5c3d5c 0%, #2a1a2a 100%); }
+    &.bg-coffee {
+      background: linear-gradient(135deg, #5c4033 0%, #2a1810 100%);
+    }
+    &.bg-soda {
+      background: linear-gradient(135deg, #8b1a1a 0%, #3d0a0a 100%);
+    }
+    &.bg-tea {
+      background: linear-gradient(135deg, #1a5c35 0%, #0a2e18 100%);
+    }
+    &.bg-juice {
+      background: linear-gradient(135deg, #8b5a10 0%, #3d2808 100%);
+    }
+    &.bg-milk {
+      background: linear-gradient(135deg, #5c3d5c 0%, #2a1a2a 100%);
+    }
   }
 
   &__info {
@@ -521,7 +568,9 @@ onMounted(async () => {
   border-radius: var(--void-radius-sm);
   background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
   color: var(--void-muted);
   font-size: 14px;
 
@@ -564,7 +613,9 @@ onMounted(async () => {
     font-size: 15px;
     color: var(--void-text);
     outline: none;
-    transition: border-color 0.25s, background 0.25s;
+    transition:
+      border-color 0.25s,
+      background 0.25s;
 
     &::placeholder {
       color: rgba(255, 255, 255, 0.28);
