@@ -39,6 +39,32 @@
         <span>{{ statusText }}</span>
       </div>
 
+      <section class="rag-tools" data-reveal>
+        <div class="rag-tool">
+          <div class="rag-tool__title">新增 Q&amp;A</div>
+          <p class="rag-tool__hint">写入数据源并增量入库（整条问答不拆开）</p>
+          <textarea v-model="qaQuestion" rows="2" placeholder="问题" :disabled="qaSaving" />
+          <textarea v-model="qaAnswer" rows="3" placeholder="答案" :disabled="qaSaving" />
+          <button class="void-btn void-btn--primary" type="button" :disabled="qaSaving || !qaQuestion.trim() || !qaAnswer.trim()" data-magnetic @click="submitQa">
+            <span class="void-btn__glow" />
+            {{ qaSaving ? '提交中…' : '提交问答' }}
+          </button>
+          <div v-if="qaStatus" class="rag-tool__status" :class="qaOk ? 'ok' : 'warn'">{{ qaStatus }}</div>
+        </div>
+
+        <div class="rag-tool">
+          <div class="rag-tool__title">新增数据源</div>
+          <p class="rag-tool__hint">支持 md / txt / markdown / xlsx；同名自动改名，不覆盖</p>
+          <input class="rag-tool__subdir" v-model="uploadSubdir" type="text" placeholder="相对子目录（可选，默认 16-用户上传）" :disabled="uploading" />
+          <input type="file" accept=".md,.txt,.markdown,.xlsx" :disabled="uploading" @change="onUploadFile" />
+          <button class="void-btn void-btn--primary" type="button" :disabled="uploading || !uploadFile" data-magnetic @click="submitUpload">
+            <span class="void-btn__glow" />
+            {{ uploading ? '上传中…' : '上传并入库' }}
+          </button>
+          <div v-if="uploadStatus" class="rag-tool__status" :class="uploadOk ? 'ok' : 'warn'">{{ uploadStatus }}</div>
+        </div>
+      </section>
+
       <section class="rag-panel">
         <div ref="listRef" class="rag-messages">
           <div v-if="!messages.length" class="rag-empty">
@@ -67,6 +93,11 @@
                   </div>
                   <pre>{{ c.excerpt }}</pre>
                 </div>
+              </div>
+
+              <div v-if="rewriteInfo(m)" class="rag-rewrite">
+                <span class="rag-rewrite__label">检索改写</span>
+                <code>{{ rewriteInfo(m) }}</code>
               </div>
 
               <details v-if="m.process" class="rag-process">
@@ -116,6 +147,21 @@ interface RagMessage {
   process?: unknown
 }
 
+
+function rewriteInfo(m: RagMessage): string {
+  const steps = (m.process as any)?.steps
+  if (!Array.isArray(steps)) return ''
+  const s = steps.find((x: any) => x?.name === '追问改写' || x?.step === 0)
+  const d = s?.detail || {}
+  const rewritten = (d.rewritten_question || '').toString().trim()
+  const original = (d.original_question || '').toString().trim()
+  if (!rewritten) return ''
+  if (original && rewritten !== original) return rewritten
+  // still show when history was used even if unchanged
+  if ((d.history_turns_used || 0) > 0) return rewritten
+  return ''
+}
+
 const messages = ref<RagMessage[]>([])
 const question = ref('')
 const asking = ref(false)
@@ -124,6 +170,18 @@ const healthLoading = ref(false)
 const statusText = ref('')
 const statusOk = ref(false)
 const listRef = ref<HTMLElement | null>(null)
+
+const qaQuestion = ref('')
+const qaAnswer = ref('')
+const qaSaving = ref(false)
+const qaStatus = ref('')
+const qaOk = ref(false)
+
+const uploadSubdir = ref('')
+const uploadFile = ref<File | null>(null)
+const uploading = ref(false)
+const uploadStatus = ref('')
+const uploadOk = ref(false)
 
 async function checkHealth() {
   healthLoading.value = true
@@ -160,6 +218,10 @@ async function doIngest() {
 async function ask() {
   const q = question.value.trim()
   if (!q || asking.value) return
+  // Prior turns only (before this question) for follow-up rewrite on the backend.
+  const history = messages.value
+    .filter(m => (m.role === 'user' || m.role === 'assistant') && m.content && m.content !== '检索中…')
+    .map(m => ({ role: m.role, content: m.content }))
   messages.value.push({ id: `u-${Date.now()}`, role: 'user', content: q })
   question.value = ''
   asking.value = true
@@ -170,7 +232,7 @@ async function ask() {
   try {
     const r = await $fetch<any>('/api/rag/chat', {
       method: 'POST',
-      body: { question: q, top_k: 4 },
+      body: { question: q, top_k: 4, messages: history },
     })
     const msg = messages.value.find(m => m.id === aid)
     if (msg) {
@@ -187,6 +249,70 @@ async function ask() {
     asking.value = false
     await nextTick()
     listRef.value?.scrollTo({ top: listRef.value.scrollHeight })
+  }
+}
+
+
+async function submitQa() {
+  const q = qaQuestion.value.trim()
+  const a = qaAnswer.value.trim()
+  if (!q || !a || qaSaving.value) return
+  qaSaving.value = true
+  qaStatus.value = ''
+  try {
+    const r = await $fetch<any>('/api/rag/qa', {
+      method: 'POST',
+      body: { question: q, answer: a },
+    })
+    qaOk.value = true
+    qaStatus.value = `已保存并增量入库：${r.rel_source || r.saved_path} · +${r.added_chunks ?? r.chunks ?? 0} chunks · 总数 ${r.collection_count ?? '?'}`
+    qaQuestion.value = ''
+    qaAnswer.value = ''
+    statusOk.value = true
+    statusText.value = qaStatus.value
+  }
+  catch (e: any) {
+    qaOk.value = false
+    qaStatus.value = e?.data?.message || e?.message || '提交问答失败'
+  }
+  finally {
+    qaSaving.value = false
+  }
+}
+
+function onUploadFile(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  uploadFile.value = input.files?.[0] || null
+  uploadStatus.value = uploadFile.value ? `已选择：${uploadFile.value.name}` : ''
+  uploadOk.value = !!uploadFile.value
+}
+
+async function submitUpload() {
+  if (!uploadFile.value || uploading.value) return
+  uploading.value = true
+  uploadStatus.value = ''
+  try {
+    const fd = new FormData()
+    fd.append('file', uploadFile.value)
+    const sub = uploadSubdir.value.trim()
+    if (sub) fd.append('subdir', sub)
+    const r = await $fetch<any>('/api/rag/upload', {
+      method: 'POST',
+      body: fd,
+    })
+    uploadOk.value = true
+    const renamed = r.renamed ? '（已自动改名避免覆盖）' : ''
+    uploadStatus.value = `已上传并增量入库${renamed}：${r.rel_source || r.saved_path} · +${r.added_chunks ?? r.chunks ?? 0} chunks · 总数 ${r.collection_count ?? '?'}`
+    statusOk.value = true
+    statusText.value = uploadStatus.value
+    uploadFile.value = null
+  }
+  catch (e: any) {
+    uploadOk.value = false
+    uploadStatus.value = e?.data?.message || e?.message || '上传失败'
+  }
+  finally {
+    uploading.value = false
   }
 }
 
@@ -492,6 +618,98 @@ onMounted(() => { checkHealth() })
   .rag-input {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+.rag-rewrite {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--xj-accent) 45%, var(--void-border));
+  background: color-mix(in srgb, var(--xj-accent-soft) 55%, transparent);
+  font-size: 12px;
+  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+}
+.rag-rewrite__label {
+  font-family: var(--void-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--xj-accent);
+  flex-shrink: 0;
+}
+.rag-rewrite code {
+  color: var(--void-text);
+  font-family: var(--void-mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.rag-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.rag-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--void-border);
+  border-radius: var(--void-radius);
+  background: var(--void-surface);
+  box-shadow: var(--xj-shadow);
+}
+.rag-tool__title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--void-text);
+}
+.rag-tool__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--void-muted);
+  line-height: 1.5;
+}
+.rag-tool textarea,
+.rag-tool__subdir,
+.rag-tool input[type="file"] {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid var(--void-border);
+  background: color-mix(in srgb, var(--xj-bg) 80%, transparent);
+  color: var(--void-text);
+  font: inherit;
+  padding: 10px 12px;
+}
+.rag-tool textarea {
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.5;
+}
+.rag-tool .void-btn {
+  width: auto;
+  align-self: flex-start;
+  min-width: 120px;
+  height: 42px;
+  padding: 0 18px;
+}
+.rag-tool__status {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--xj-warning);
+}
+.rag-tool__status.ok {
+  color: var(--xj-success);
+}
+@media (max-width: 720px) {
+  .rag-tools {
+    grid-template-columns: 1fr;
   }
 }
 </style>

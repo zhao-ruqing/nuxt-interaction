@@ -25,6 +25,15 @@
 
 ### 1) Python RAG（端口 8002）
 
+当前窗口若是 **cmd**（提示符是 `rag-service>`），不要直接敲 `.\run.ps1`，那会用记事本打开脚本。用：
+
+```bat
+cd D:\Project\My-Projects\nuxt\nuxt-interaction\rag-service
+.\run.cmd
+```
+
+当前窗口若是 **PowerShell**（提示符以 `PS` 开头），用：
+
 ```powershell
 cd D:\Project\My-Projects\nuxt\nuxt-interaction\rag-service
 .\run.ps1

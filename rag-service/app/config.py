@@ -26,10 +26,14 @@ CHAT_MODEL = os.getenv("CHAT_MODEL", "qwen3.8-27b").strip()
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "qwen3.7-text-embedding-flash").strip()
 DATA_DIR = _path(os.getenv("DATA_DIR"), Path(r"D:\Project\My-Projects\agent\数据源"))
 CHROMA_DIR = _path(os.getenv("CHROMA_DIR"), ROOT / "data" / "chroma")
+BM25_PATH = _path(os.getenv("BM25_PATH"), ROOT / "data" / "bm25_index.json")
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 TOP_K = 4
+# Wider recall before fusion; final generation still uses TOP_K (or request top_k).
+CANDIDATE_POOL = 20
+RRF_K = 60
 COLLECTION_NAME = "nuxt_interaction_rag"
 
 
