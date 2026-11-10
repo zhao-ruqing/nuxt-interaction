@@ -7,7 +7,9 @@
 | **方案一：Dify + 幽灵手** | 右下角悬浮「饮品 AI 助手」 | Dify 工作流 | AI 返回 JSON 指令 → 前端解析 → 路由跳转 + 幽灵手模拟点击 |
 | **方案二：Page Agent** | 右上角「页面助手」按钮 | DeepSeek（OpenAI 兼容） | Agent 直接观察 DOM、逐步推理并执行点击/输入 |
 
-更详细的开发说明见 [`docs/AI助手开发文档.md`](docs/AI助手开发文档.md)。
+另外提供 **标准 RAG 知识库**：独立 Python 服务 `rag-service`（默认 `127.0.0.1:8002`）与 Nuxt 页面 [`/rag`](http://127.0.0.1:3000/rag)。浏览器只请求 `/api/rag/*`，由 Nuxt 服务端代理到 rag-service，前端不放密钥。
+
+更详细的开发说明见 [`docs/AI助手开发文档.md`](docs/AI助手开发文档.md)；RAG 补充说明见 [`docs/RAG.md`](docs/RAG.md)。
 
 ---
 
@@ -19,6 +21,7 @@
 - **AI**：
   - Dify API（对话 + 结构化指令）
   - [page-agent](https://github.com/alibaba/page-agent)（浏览器自动化 Agent）
+  - 标准 RAG：独立 FastAPI 服务（Chroma 向量检索 + BM25 / jieba 混合检索，阿里云百炼 DashScope）
 - **动画**：GSAP（幽灵手光标移动）
 - **地图**：高德地图 JS API
 
@@ -62,7 +65,9 @@ UPDATE system_configs SET config_value = '你的DeepSeek Key' WHERE config_key =
 pnpm dev
 ```
 
-访问 `http://localhost:3000`。
+访问 `http://localhost:3000`（`pnpm dev` 即 `nuxt dev --open`，默认端口 3000）。
+
+如需使用知识库问答，请再启动 `rag-service`（见下方「标准 RAG 知识库」），然后打开 `http://127.0.0.1:3000/rag`。
 
 ---
 
@@ -85,16 +90,24 @@ app/
 │   ├── orderAutomation.ts        # 待执行的下单任务
 │   └── adminAutomation.ts        # 待执行的后台管理任务
 └── pages/
+    ├── rag/index.vue             # 标准 RAG 知识库对话页
     ├── products/[id].vue         # 商品详情（含 data-ghost-target 标记）
     ├── payment/index.vue         # 支付确认页
     └── dashboard/                # 后台：概览 / 商品管理 / 地图标注
 
 server/
 ├── api/
+│   ├── rag/                      # 代理 rag-service：health / ingest / chat / qa / upload
 │   ├── ai/chat.post.ts           # Dify 流式代理
 │   ├── config/deepseek.get.ts    # DeepSeek 配置下发（仅服务端持有 Key）
 │   └── products/、orders/、addresses/ ...
 └── sql/                          # 建表与初始数据
+
+rag-service/                      # 独立 Python FastAPI（默认 8002）
+├── app/                          # 入库、追问改写、混合检索、生成
+├── requirements.txt
+├── run.ps1 / run.cmd             # 本机启动脚本
+└── .env.example                  # 环境变量名示例（勿写入真实密钥后提交）
 ```
 
 ---
@@ -264,6 +277,81 @@ server/
 
 ---
 
+## 标准 RAG 知识库
+
+Nuxt 负责页面与 API 代理，RAG 为独立的 Python FastAPI 服务；**前端不放密钥**。
+
+### 架构
+
+```
+浏览器 /rag 页
+        ↓  /api/rag/health | ingest | chat | qa | upload
+Nuxt 服务端代理（server/api/rag/*）
+        ↓  RAG_SERVICE_URL（默认 http://127.0.0.1:8002）
+rag-service（FastAPI）
+        → 追问改写（仅指代/省略时）
+        → 混合检索（向量 + BM25，RRF 融合）
+        → 仅用命中 chunk 生成答案与引用
+```
+
+数据源默认复用 `D:\Project\My-Projects\agent\数据源`（递归扫描 `.md` / `.txt` / `.markdown` / `.xlsx`）。该目录属于独立的 agent 项目，不在本仓库内提交。
+
+本地向量库与 BM25 索引写在 `rag-service/data/`（`chroma/`、`bm25_index.json` 均已 gitignore），不要提交到远程。
+
+### 入库与检索
+
+- **文本（md / txt）**：固定切块（500 字，重叠 50）。
+- **xlsx**：按工作表「表头 + 每一行」细切为可检索单元（另有表头横幅单元，便于按工作表发现）。
+- **混合检索**：问题同时走 Chroma 向量检索和 BM25（jieba 分词）检索，再用 RRF 融合后取 TopK，仅用命中内容生成答案；资料不足时明确说不知道，不编造。
+- **追问改写**（contextualize-question）：多轮对话中，仅当新问题依赖上文（代词指代、省略主语/型号，例如「电流呢？」）时，才改写成可独立检索的问句再检索；若问题本身已是完整新意图，则原样检索，不会把历史里的型号或限定词注入进去。
+
+### /rag 页：新增 Q&A 与数据源
+
+打开 `http://127.0.0.1:3000/rag`：
+
+| 操作 | 行为 |
+|------|------|
+| **新增 Q&A**（「提交问答」） | 写入数据源目录 `15-用户问答\qa_<时间>_<摘要>.md`，整条 Q&A 作为一条可检索单元，**不会被切碎**；随后做增量入库。 |
+| **新增数据源**（「上传并入库」） | 支持 md / txt / markdown / xlsx。默认写入 `16-用户上传\`，也可填写相对子目录（不能逃出数据源根目录）。同名不会覆盖，自动改成 `name_1.ext`。提交后增量入库。 |
+| **重新入库** | 仍为全量 reset：重建 Chroma 与 BM25，并重新扫描整个数据源目录。 |
+
+增量入库会先 embedding，再写入 Chroma 并追加 BM25，不会每次全量重建。
+
+### 本机启动
+
+1. 在 `rag-service/.env` 中配置密钥与模型（可复制 `rag-service/.env.example`）。至少设置 `DASHSCOPE_API_KEY`；可选 `DASHSCOPE_BASE_URL`、`CHAT_MODEL`、`EMBEDDING_MODEL`、`DATA_DIR`、`CHROMA_DIR`。项目根目录 `.env` 可设置 `RAG_SERVICE_URL`（默认 `http://127.0.0.1:8002`）。**只写环境变量名到文档，真实值只放在已忽略的 `.env` 中，不要提交。**
+
+2. 启动 rag-service（端口 8002）。在 `rag-service` 目录激活虚拟环境后启动（建议加 `--reload`）：
+
+```bash
+cd rag-service
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --host 127.0.0.1 --port 8002 --reload
+```
+
+若尚未创建虚拟环境，先在该目录执行 `python -m venv .venv`，激活后 `pip install -r requirements.txt`。也可以使用目录内的 `run.ps1`（PowerShell）或 `run.cmd`（cmd）。健康检查：http://127.0.0.1:8002/health 。
+
+3. 启动 Nuxt（端口 3000）：
+
+```bash
+pnpm dev
+```
+
+即 `nuxt dev --open`。然后打开 http://127.0.0.1:3000/rag 。
+
+### 关键文件
+
+| 路径 | 职责 |
+|------|------|
+| `rag-service/app/ingest.py` | 扫描数据源、切块（含 xlsx 表头+行、问答整条不拆）、写入 Chroma / BM25 |
+| `rag-service/app/ingest_extra.py` | 新增问答、上传文件与增量入库 |
+| `rag-service/app/rewrite.py` | 追问改写（仅指代/省略） |
+| `rag-service/app/retrieve.py` | 向量 + BM25（jieba）RRF 混合检索 |
+| `rag-service/app/generate.py` | 仅用检索 chunk 生成答案与引用 |
+| `server/api/rag/*` | Nuxt 代理 `/api/rag/*` |
+| `app/pages/rag/index.vue` | `/rag` 对话与入库工具页 |
+
 ## 主要功能页面
 
 | 路径 | 说明 |
@@ -276,15 +364,19 @@ server/
 | `/dashboard` | 后台概览（内嵌 AI 助手） |
 | `/dashboard/manage-products` | 商品管理 |
 | `/dashboard/map` | 地图标注 |
+| `/rag` | 标准 RAG 知识库（对话、引用、新增 Q&A / 上传数据源、重新入库） |
 
 ---
 
 ## 常用命令
 
 ```bash
-pnpm dev        # 开发
+pnpm dev        # 开发（nuxt dev --open，端口 3000）
 pnpm build      # 构建
 pnpm preview    # 预览构建产物
+
+# 在 rag-service 目录：激活 .venv 后
+uvicorn app.main:app --host 127.0.0.1 --port 8002 --reload
 ```
 
 ---
@@ -292,6 +384,7 @@ pnpm preview    # 预览构建产物
 ## 相关文档
 
 - [`docs/AI助手开发文档.md`](docs/AI助手开发文档.md) — Dify 对接、指令协议、幽灵手、后台自动化、版本记录
+- [`docs/RAG.md`](docs/RAG.md) — 标准 RAG 补充说明（启动与目录）
 - [`docs/api/products.md`](docs/api/products.md) — 商品接口说明
 
 ---
@@ -305,3 +398,5 @@ pnpm preview    # 预览构建产物
 | v0.3 | 规格/库存校验 + 支付页 + 真实数据库库存 |
 | v0.4 | 后台管理 AI 自动化（商品 CRUD、地图标注） |
 | v0.5 | 集成 Page Agent（DeepSeek）作为第二套页面操作方案 |
+| v0.6 | 标准 RAG：独立 rag-service（8002）+ `/rag` 页，数据源入库与问答 |
+| v0.7 | 追问改写、向量+BM25 混合检索、新增 Q&A / 上传数据源与增量入库 |
